@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+#psycopg2
+mysql-connector-python
+sqlalchemy
+python-dotenv
+pyJWT[crypto]
+passlib[bcrypt]
+python-multipart
