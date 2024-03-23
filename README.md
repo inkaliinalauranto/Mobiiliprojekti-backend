@@ -1,19 +1,18 @@
 # Team 1 CoolBox mobiiliprojekti Backend
-Repon kopiointi:
+
+## Repon kopiointi
 - Clone with HTTPS
 - PyCharmissa create from VCS
 
-Virtuaaliympäristön luonti:
+## Virtuaaliympäristön luonti
 - python -m venv venv
-
-Riippuvuuksien asennus:
 - python -m pip install -r requirements.txt
 
-Virtuaaliympäristön aktivointi:
+## Uvicornin käynnistäminen
 - venv\Scripts\activate
-
-Uvicornin käynnistäminen:
 - uvicorn main:app
 
-MySQL tietokantan yhdistäminen:
-- luo kopio .env.example ja nimeä .env
+## MySQL tietokantaan yhdistäminen
+- luo .env tiedosto
+- lisää sinne DB muuttuja
+    - DB=driver://kayttaja:salasana@localhost/tietokannan_nimi
