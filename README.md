@@ -14,5 +14,6 @@
 
 ## MySQL tietokantaan yhdistäminen
 - luo .env tiedosto
-- lisää sinne DB muuttuja
-    - DB=driver://kayttaja:salasana@localhost/cooldev_olap
+- lisää sinne DB ja DW muuttujat
+    - DB=driver://kayttaja:salasana@localhost/cooldev_oltp
+    - DW=driver://kayttaja:salasana@localhost/cooldev_olap
