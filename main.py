@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from sqlalchemy import text
-from datetime import datetime
+from datetime import datetime, date, timedelta
 
 from db import DW
 
@@ -93,6 +93,9 @@ async def get_battery_statistics(dw: DW):
 # Haetaan päiväkohtainen kokonaistuotto tunneittain ryhmiteltynä:
 @app.get("/api/measurement/total_production/day/{date}")
 async def get_total_production_statistics_hourly_for_a_day(dw: DW, date: str):
+    """
+    Get production stats from a given day grouped by hour. String format YYYY-MM-DD
+    """
     _query = text("SELECT SUM(p.value) AS total_production, d.hour FROM `productions_fact` p LEFT JOIN dates_dim d ON p.date_key = d.date_key WHERE CONCAT_WS('-', d.year, d.month, d.day) = :date GROUP BY d.hour;")
     rows = dw.execute(_query, {"date": date})
     data = rows.mappings().all()
@@ -102,7 +105,23 @@ async def get_total_production_statistics_hourly_for_a_day(dw: DW, date: str):
 # Haetaan viikkokohtainen kokonaistuotto päivittäin ryhmiteltynä:
 @app.get("/api/measurement/total_production/week/{date}")
 async def get_total_production_statistics_daily_for_a_week(dw: DW, date: str):
+    """
+    Get production stats from a given day grouped by hour. String format YYYY-MM-DD
+    """
     _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as day, SUM(p.value) AS total_production FROM `productions_fact` p LEFT JOIN dates_dim d ON p.date_key = d.date_key WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) BETWEEN DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND :date GROUP BY d.day;")
     rows = dw.execute(_query, {"date": date})
     data = rows.mappings().all()
+    return {"data": data}
+
+
+# Haetaan kulutus annetusta päivämäärästä 7-päivän jakso taaksepäin, jotka lajitellaan päiväkohtaisesti.
+@app.get("/api/measurement/consumption/total/week/{date}")
+async def get_total_consumption_statistics_daily_for_a_week(dw: DW, date: str):
+    """
+    Get daily consumptions of 7-day period. Last day is the given date. String format YYYY-MM-DD
+    """
+    _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as day, sum(value) AS total_kwh FROM total_consumptions_fact f JOIN dates_dim d ON d.date_key = f.date_key WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) BETWEEN DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND :date GROUP BY d.day ORDER BY day;")
+    rows = dw.execute(_query, {"date": date})
+    data = rows.mappings().all()
+
     return {"data": data}
