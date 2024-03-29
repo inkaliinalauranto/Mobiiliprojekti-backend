@@ -56,55 +56,137 @@ async def get_most_recent_values_from_battery(dw: DW):
 
 
 # Haetaan päiväkohtainen kokonaistuotto tunneittain ryhmiteltynä:
-@app.get("/api/measurement/production/total/day/{date}")
+@app.get("/api/measurement/production/total/hourly-for-day/{date}")
 async def get_total_production_statistics_hourly_for_a_day(dw: DW, date: str):
     """
     Get production stats from a given day grouped by hour. String format YYYY-MM-DD
     """
-    _query = text("SELECT SUM(p.value) AS total_production, d.hour FROM productions_fact p JOIN dates_dim d ON p.date_key = d.date_key WHERE CONCAT_WS('-', d.year, d.month, d.day) = DATE(:date) GROUP BY d.hour;")
+    _query = text("SELECT SUM(p.value) AS total_production, d.hour "
+                  "FROM productions_fact p JOIN dates_dim d ON p.date_key = d.date_key "
+                  "WHERE CONCAT_WS('-', d.year, d.month, d.day) = DATE(:date) "
+                  "GROUP BY d.hour;")
+    rows = dw.execute(_query, {"date": date})
+    data = rows.mappings().all()
+    return {"data": data}
+
+
+# Haetaan päiväkohtainen kokonaistuotto:
+@app.get("/api/measurement/production/total/day/{date}")
+async def get_total_production_statistics_for_a_day(dw: DW, date: str):
+    """
+    Get production stats from a given day. String format YYYY-MM-DD
+    """
+    _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as day, "
+                  "SUM(p.value) AS total_production "
+                  "FROM productions_fact p JOIN dates_dim d ON p.date_key = d.date_key "
+                  "WHERE CONCAT_WS('-', d.year, d.month, d.day) = DATE(:date);")
     rows = dw.execute(_query, {"date": date})
     data = rows.mappings().all()
     return {"data": data}
 
 
 # Haetaan viikkokohtainen kokonaistuotto päivittäin ryhmiteltynä:
-@app.get("/api/measurement/production/total/week/{date}")
+@app.get("/api/measurement/production/total/daily-for-week/{date}")
 async def get_total_production_statistics_daily_for_a_week(dw: DW, date: str):
     """
     Get production stats from a given week grouped by day. String format YYYY-MM-DD
     """
-    _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as day, SUM(p.value) AS total_production FROM productions_fact p JOIN dates_dim d ON p.date_key = d.date_key WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) BETWEEN DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND :date GROUP BY d.day;")
+    _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as day, "
+                  "SUM(p.value) AS total_production "
+                  "FROM productions_fact p "
+                  "JOIN dates_dim d ON p.date_key = d.date_key "
+                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
+                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND :date;"
+                  "GROUP BY d.day;")
+    rows = dw.execute(_query, {"date": date})
+    data = rows.mappings().all()
+    return {"data": data}
+
+
+# Haetaan viikkokohtainen kokonaistuotto:
+@app.get("/api/measurement/production/total/week/{date}")
+async def get_total_production_statistics_for_a_week(dw: DW, date: str):
+    """
+    Get production stats from a given week. String format YYYY-MM-DD
+    """
+    _query = text("SELECT SUM(p.value) AS total_production "
+                  "FROM productions_fact p "
+                  "JOIN dates_dim d ON p.date_key = d.date_key "
+                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
+                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND :date;")
     rows = dw.execute(_query, {"date": date})
     data = rows.mappings().all()
     return {"data": data}
 
 
 # Haetaan kuukausikohtainen kokonaistuotto päivittäin ryhmiteltynä:
-@app.get("/api/measurement/production/total/month/{date}")
+@app.get("/api/measurement/production/total/daily-for-month/{date}")
 async def get_total_production_statistics_daily_for_a_month(dw: DW, date: str):
     """
     Get production stats from a given month grouped by day. String format YYYY-MM-DD
     """
-    _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as day, SUM(p.value) AS total_production FROM productions_fact p JOIN dates_dim d ON p.date_key = d.date_key WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 MONTH) AND :date GROUP BY d.day;")
+    _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as day, "
+                  "SUM(p.value) AS total_production "
+                  "FROM productions_fact p "
+                  "JOIN dates_dim d ON p.date_key = d.date_key "
+                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
+                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 MONTH) AND :date; "
+                  "GROUP BY d.day;")
+    rows = dw.execute(_query, {"date": date})
+    data = rows.mappings().all()
+    return {"data": data}
+
+
+# Haetaan kuukausikohtainen kokonaistuotto:
+@app.get("/api/measurement/production/total/month/{date}")
+async def get_total_production_statistics_for_a_month(dw: DW, date: str):
+    """
+    Get production stats from a given month. String format YYYY-MM-DD
+    """
+    _query = text("SELECT SUM(p.value) AS total_production "
+                  "FROM productions_fact p "
+                  "JOIN dates_dim d ON p.date_key = d.date_key "
+                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
+                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 MONTH) AND :date;")
     rows = dw.execute(_query, {"date": date})
     data = rows.mappings().all()
     return {"data": data}
 
 
 # Haetaan vuosikohtainen kokonaistuotto kuukausittain ryhmiteltynä:
-@app.get("/api/measurement/production/total/year/{date}")
+@app.get("/api/measurement/production/total/monthly-for-year/{date}")
 async def get_total_production_statistics_monthly_for_a_year(dw: DW, date: str):
     """
     Get production stats from a given year grouped by month. String format YYYY-MM-DD
     """
-    _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as day, SUM(p.value) AS total_production FROM productions_fact p JOIN dates_dim d ON p.date_key = d.date_key WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 YEAR) AND :date GROUP BY d.month;")
+    _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as day, "
+                  "SUM(p.value) AS total_production FROM productions_fact p "
+                  "JOIN dates_dim d ON p.date_key = d.date_key "
+                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
+                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 YEAR) AND :date "
+                  "GROUP BY d.month;")
+    rows = dw.execute(_query, {"date": date})
+    data = rows.mappings().all()
+    return {"data": data}
+
+
+# Haetaan vuosikohtainen kokonaistuotto:
+@app.get("/api/measurement/production/total/year/{date}")
+async def get_total_production_statistics_for_a_year(dw: DW, date: str):
+    """
+    Get production stats from a given year. String format YYYY-MM-DD
+    """
+    _query = text("SELECT SUM(p.value) AS total_production FROM productions_fact p "
+                  "JOIN dates_dim d ON p.date_key = d.date_key "
+                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
+                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 YEAR) AND :date;")
     rows = dw.execute(_query, {"date": date})
     data = rows.mappings().all()
     return {"data": data}
 
 
 # Haetaan kulutus annetusta päivämäärästä 7-päivän jakso taaksepäin, jotka lajitellaan päiväkohtaisesti.
-@app.get("/api/measurement/consumption/total/week/{date}")
+@app.get("/api/measurement/consumption/total/daily-for-week/{date}")
 async def get_total_consumption_statistics_daily_for_a_week(dw: DW, date: str):
     """
     Get daily consumptions of 7-day period. Last day is the given date. String format YYYY-MM-DD
