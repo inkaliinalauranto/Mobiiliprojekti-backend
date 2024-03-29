@@ -10,28 +10,33 @@ app = FastAPI()
 """  
 how to fastapi
 
-@app.get("/endpoint/merkkijono/{jokinarvo}")
+@app.get("/measurement/mitattava_asia/mahdollinen_lisätieto/{jokinarvo}")
 async def kuvaava_nimi_tähän_tyyliin_koska_menee_docs(dw: DW tai db: DB, jokinarvo: int):
     
-    _query_str = ("SELECT value FROM measurements_fact AS m")
-    
-    _query = text(_query_str)
+    _query = text("SELECT value FROM measurements_fact AS m WHERE value = :jokinarvo")
     rows = dw. tai db.execute(_query, {"jokinarvo": jokinarvo})
+    data = rows.mappings().all()
+    
+    return {'dictionary_key': data}
     
     # mappings tekee jokaisesta tuloksen rivistä dictionaryn, 
     # jossa keynä on sql columnin nimi ja tekee niistä listan esim:
-    # [
-    #   {
-    #     "consumption" : 40
-    #   },
-    #   {
-    #     "consumption" : 50
-    #   }
-    # ]
-    
-    data = rows.mappings().all()
-
-    return {'dictionary_key': data}
+    # {
+    #   "current_battery_stats": [
+    #     {
+    #       "sensor": "SoC %",
+    #       "value": 46
+    #     },
+    #     {
+    #       "sensor": "Temperature °C",
+    #       "value": 17.5
+    #     },
+    #     {
+    #       "sensor": "Voltage V",
+    #       "value": 50.1
+    #     }
+    #   ]
+    # }
 """
 
 
@@ -40,58 +45,18 @@ async def kuvaava_nimi_tähän_tyyliin_koska_menee_docs(dw: DW tai db: DB, jokin
 # ehkä pitää poistaa niin saadaan koodista siistimpi.
 # Ja samalla varmaan poistaa temp, koska sinänsä aika turha tieto.
 
-# Palauttaa akun uusimman tiedon varauksesta, kunnosta, lämpötilasta
-@app.get("/api/measurement/battery")
-async def get_battery_statistics(dw: DW):
-    _query_soc = ("SELECT value as 'SoC' FROM measurements_fact AS m "
-                  "JOIN dates_dim AS d ON d.date_key = m.date_key "
-                  "JOIN sensors_dim AS s ON s.sensor_key = m.sensor_key "
-                  "WHERE s.device_id = 'TB_batterypack' AND s.sensor_id = 'soc' "
-                  "ORDER BY m.date_key DESC LIMIT 1;")
-
-    _query_soh = ("SELECT value as 'SoH' FROM measurements_fact AS m "
-                  "JOIN dates_dim AS d ON d.date_key = m.date_key "
-                  "JOIN sensors_dim AS s ON s.sensor_key = m.sensor_key "
-                  "WHERE s.device_id = 'TB_batterypack' AND s.sensor_id = 'soh' "
-                  "ORDER BY m.date_key DESC LIMIT 1;")
-
-    _query_temp = ("SELECT value as 'Temperature' FROM measurements_fact AS m "
-                  "JOIN dates_dim AS d ON d.date_key = m.date_key "
-                  "JOIN sensors_dim AS s ON s.sensor_key = m.sensor_key "
-                  "WHERE s.device_id = 'TB_batterypack' AND s.sensor_id = 'temperature' "
-                  "ORDER BY m.date_key DESC LIMIT 1;")
-
-    _query = text(_query_soc)
+# Palauttaa uusimmat tilastot akun tiedoista
+@app.get("/api/measurement/battery/current")
+async def get_most_recent_values_from_battery(dw: DW):
+    _query = text("SELECT s.sensor_name AS sensor, m.value AS value FROM measurements_fact AS m JOIN dates_dim AS d ON d.date_key = m.date_key JOIN sensors_dim AS s ON s.sensor_key = m.sensor_key WHERE s.device_id = 'TB_batterypack' AND m.date_key = (SELECT MAX(date_key) FROM measurements_fact WHERE sensor_key = s.sensor_key) ORDER BY s.sensor_id;")
     rows = dw.execute(_query)
-    soc = rows.mappings().all()
+    data = rows.mappings().all()
 
-    _query = text(_query_soh)
-    rows = dw.execute(_query)
-    soh = rows.mappings().all()
-
-    _query = text(_query_temp)
-    rows = dw.execute(_query)
-    temp = rows.mappings().all()
-
-    for i in soc:
-        print(i)
-        soc = i.get("SoC")
-
-    for i in soh:
-        print(i)
-        soh = i.get("SoH")
-
-    for i in temp:
-        print(i)
-        temp = i.get("Temperature")
-
-    data = {"soc": soc, "soh": soh, "temp": temp}
-
-    return {'battery_statistics': data}
+    return {'current_battery_stats': data}
 
 
 # Haetaan päiväkohtainen kokonaistuotto tunneittain ryhmiteltynä:
-@app.get("/api/measurement/total_production/day/{date}")
+@app.get("/api/measurement/production/total/day/{date}")
 async def get_total_production_statistics_hourly_for_a_day(dw: DW, date: str):
     """
     Get production stats from a given day grouped by hour. String format YYYY-MM-DD
@@ -103,7 +68,7 @@ async def get_total_production_statistics_hourly_for_a_day(dw: DW, date: str):
 
 
 # Haetaan viikkokohtainen kokonaistuotto päivittäin ryhmiteltynä:
-@app.get("/api/measurement/total_production/week/{date}")
+@app.get("/api/measurement/production/total/week/{date}")
 async def get_total_production_statistics_daily_for_a_week(dw: DW, date: str):
     """
     Get production stats from a given day grouped by hour. String format YYYY-MM-DD
