@@ -91,6 +91,18 @@ async def get_total_production_statistics_daily_for_a_month(dw: DW, date: str):
     return {"data": data}
 
 
+# Haetaan vuosikohtainen kokonaistuotto kuukausittain ryhmiteltynä:
+@app.get("/api/measurement/production/total/year/{date}")
+async def get_total_production_statistics_monthly_for_a_year(dw: DW, date: str):
+    """
+    Get production stats from a given year grouped by month. String format YYYY-MM-DD
+    """
+    _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as day, SUM(p.value) AS total_production FROM productions_fact p JOIN dates_dim d ON p.date_key = d.date_key WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 YEAR) AND :date GROUP BY d.month;")
+    rows = dw.execute(_query, {"date": date})
+    data = rows.mappings().all()
+    return {"data": data}
+
+
 # Haetaan kulutus annetusta päivämäärästä 7-päivän jakso taaksepäin, jotka lajitellaan päiväkohtaisesti.
 @app.get("/api/measurement/consumption/total/week/{date}")
 async def get_total_consumption_statistics_daily_for_a_week(dw: DW, date: str):
