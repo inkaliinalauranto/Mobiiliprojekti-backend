@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from sqlalchemy import text
+from datetime import datetime
 
 from db import DW
 
@@ -88,3 +89,20 @@ async def get_battery_statistics(dw: DW):
 
     return {'battery_statistics': data}
 
+
+# Haetaan päiväkohtainen kokonaistuotto tunneittain ryhmiteltynä:
+@app.get("/api/measurement/total_production/day/{date}")
+async def get_total_production_statistics_daily_for_a_week(dw: DW, date: str):
+    _query = text("SELECT SUM(p.value) AS total_production, d.hour FROM `productions_fact` p LEFT JOIN dates_dim d ON p.date_key = d.date_key WHERE CONCAT_WS('-', d.year, d.month, d.day) = :date GROUP BY d.hour;")
+    rows = dw.execute(_query, {"date": date})
+    data = rows.mappings().all()
+    return {"data": data}
+
+
+# Haetaan viikkokohtainen kokonaistuotto päivittäin ryhmiteltynä:
+@app.get("/api/measurement/total_production/week/{date}")
+async def get_total_production_statistics_hourly_for_a_day(dw: DW, date: str):
+    _query = text("SELECT SUM(p.value) AS total_production, d.day FROM `productions_fact` p LEFT JOIN dates_dim d ON p.date_key = d.date_key WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) BETWEEN DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND :date GROUP BY d.day;")
+    rows = dw.execute(_query, {"date": date})
+    data = rows.mappings().all()
+    return {"data": data}

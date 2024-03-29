@@ -14,9 +14,9 @@ dw = os.environ.get("DW")
 dw_engine = create_engine(dw)
 dw_session = sessionmaker(bind=dw_engine)
 
-db = os.environ.get("DB")
-db_engine = create_engine(db)
-db_session = sessionmaker(bind=db_engine)
+# db = os.environ.get("DB")
+# db_engine = create_engine(db)
+# db_session = sessionmaker(bind=db_engine)
 
 
 def get_dw():
@@ -30,17 +30,17 @@ def get_dw():
             _dw.close()
 
 
-def get_db():
-    _db = None
-    try:
-        sessionmaker(bind=db_engine)
-        _db = db_session()
-        yield _db
-    finally:
-        if _db is not None:
-            _db.close()
+# def get_db():
+#     _db = None
+#     try:
+#         sessionmaker(bind=db_engine)
+#         _db = db_session()
+#         yield _db
+#     finally:
+#         if _db is not None:
+#             _db.close()
 
 
 # Nämä importataan sinne, missä databaseja tarvii
 DW = Annotated[Session, Depends(get_dw)]
-DB = Annotated[Session, Depends(get_db)]
+# DB = Annotated[Session, Depends(get_db)]
