@@ -85,6 +85,21 @@ async def get_total_production_statistics_for_a_day(dw: DW, date: str):
     return {"data": data}
 
 
+# Haetaan kaikelle tuotolle päiväkohtainen keskiarvo:
+@app.get("/api/measurement/production/avg/day/{date}")
+async def get_avg_production_statistics_for_a_day(dw: DW, date: str):
+    """
+    Get production stats from a given day. String format YYYY-MM-DD
+    """
+    _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as day, "
+                  "AVG(p.value) AS avg_production "
+                  "FROM productions_fact p JOIN dates_dim d ON p.date_key = d.date_key "
+                  "WHERE CONCAT_WS('-', d.year, d.month, d.day) = DATE(:date);")
+    rows = dw.execute(_query, {"date": date})
+    data = rows.mappings().all()
+    return {"data": data}
+
+
 # Haetaan viikkokohtainen kokonaistuotto päivittäin ryhmiteltynä:
 @app.get("/api/measurement/production/total/daily-for-week/{date}")
 async def get_total_production_statistics_daily_for_a_week(dw: DW, date: str):
@@ -110,6 +125,22 @@ async def get_total_production_statistics_for_a_week(dw: DW, date: str):
     Get production stats from a given week. String format YYYY-MM-DD
     """
     _query = text("SELECT SUM(p.value) AS total_production "
+                  "FROM productions_fact p "
+                  "JOIN dates_dim d ON p.date_key = d.date_key "
+                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
+                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND :date;")
+    rows = dw.execute(_query, {"date": date})
+    data = rows.mappings().all()
+    return {"data": data}
+
+
+# Haetaan viikkokohtainen keskiarvotuotto:
+@app.get("/api/measurement/production/avg/week/{date}")
+async def get_avg_production_statistics_for_a_week(dw: DW, date: str):
+    """
+    Get production stats from a given week. String format YYYY-MM-DD
+    """
+    _query = text("SELECT AVG(p.value) AS total_production "
                   "FROM productions_fact p "
                   "JOIN dates_dim d ON p.date_key = d.date_key "
                   "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
@@ -153,6 +184,22 @@ async def get_total_production_statistics_for_a_month(dw: DW, date: str):
     return {"data": data}
 
 
+# Haetaan kuukausikohtainen keskiarvotuotto:
+@app.get("/api/measurement/production/avg/month/{date}")
+async def get_avg_production_statistics_for_a_month(dw: DW, date: str):
+    """
+    Get production stats from a given month. String format YYYY-MM-DD
+    """
+    _query = text("SELECT AVG(p.value) AS total_production "
+                  "FROM productions_fact p "
+                  "JOIN dates_dim d ON p.date_key = d.date_key "
+                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
+                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 MONTH) AND :date;")
+    rows = dw.execute(_query, {"date": date})
+    data = rows.mappings().all()
+    return {"data": data}
+
+
 # Haetaan vuosikohtainen kokonaistuotto kuukausittain ryhmiteltynä:
 @app.get("/api/measurement/production/total/monthly-for-year/{date}")
 async def get_total_production_statistics_monthly_for_a_year(dw: DW, date: str):
@@ -177,6 +224,21 @@ async def get_total_production_statistics_for_a_year(dw: DW, date: str):
     Get production stats from a given year. String format YYYY-MM-DD
     """
     _query = text("SELECT SUM(p.value) AS total_production FROM productions_fact p "
+                  "JOIN dates_dim d ON p.date_key = d.date_key "
+                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
+                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 YEAR) AND :date;")
+    rows = dw.execute(_query, {"date": date})
+    data = rows.mappings().all()
+    return {"data": data}
+
+
+# Haetaan vuosikohtainen keskiarvotuotto:
+@app.get("/api/measurement/production/avg/year/{date}")
+async def get_avg_production_statistics_for_a_year(dw: DW, date: str):
+    """
+    Get production stats from a given year. String format YYYY-MM-DD
+    """
+    _query = text("SELECT AVG(p.value) AS total_production FROM productions_fact p "
                   "JOIN dates_dim d ON p.date_key = d.date_key "
                   "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
                   "BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 YEAR) AND :date;")
