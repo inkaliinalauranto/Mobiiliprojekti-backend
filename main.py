@@ -107,11 +107,10 @@ async def get_total_production_statistics_daily_for_a_week(dw: DW, date: str):
     Get production stats from a given week grouped by day. String format YYYY-MM-DD
     """
     _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as day, "
-                  "SUM(p.value) AS total_production "
-                  "FROM productions_fact p "
+                  "SUM(p.value) AS total_production FROM productions_fact p "
                   "JOIN dates_dim d ON p.date_key = d.date_key "
                   "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
-                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND :date;"
+                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND :date "
                   "GROUP BY d.day;")
     rows = dw.execute(_query, {"date": date})
     data = rows.mappings().all()
@@ -157,11 +156,10 @@ async def get_total_production_statistics_daily_for_a_month(dw: DW, date: str):
     Get production stats from a given month grouped by day. String format YYYY-MM-DD
     """
     _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as day, "
-                  "SUM(p.value) AS total_production "
-                  "FROM productions_fact p "
+                  "SUM(p.value) AS total_production FROM productions_fact p "
                   "JOIN dates_dim d ON p.date_key = d.date_key "
                   "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
-                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 MONTH) AND :date; "
+                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 MONTH) AND :date "
                   "GROUP BY d.day;")
     rows = dw.execute(_query, {"date": date})
     data = rows.mappings().all()
@@ -206,8 +204,9 @@ async def get_total_production_statistics_monthly_for_a_year(dw: DW, date: str):
     """
     Get production stats from a given year grouped by month. String format YYYY-MM-DD
     """
-    _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as day, "
-                  "SUM(p.value) AS total_production FROM productions_fact p "
+    _query = text("SELECT CONCAT_WS('-', d.year, d.month) AS year_and_month, "
+                  "SUM(p.value) AS total_production "
+                  "FROM productions_fact p "
                   "JOIN dates_dim d ON p.date_key = d.date_key "
                   "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
                   "BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 YEAR) AND :date "
