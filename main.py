@@ -1,10 +1,18 @@
 from fastapi import FastAPI
+from fastapi import APIRouter
 from sqlalchemy import text
 from datetime import datetime, date, timedelta
 
 from db import DW
 
 app = FastAPI()
+
+battery_router = APIRouter(tags=["Battery"])
+consumption_router = APIRouter(tags=["Consumption"])
+production_router = APIRouter(tags=["Production"])
+
+app.include_router(consumption_router)
+app.include_router(production_router)
 
 
 """  
@@ -46,7 +54,7 @@ async def kuvaava_nimi_tähän_tyyliin_koska_menee_docs(dw: DW tai db: DB, jokin
 # Ja samalla varmaan poistaa temp, koska sinänsä aika turha tieto.
 
 # Palauttaa uusimmat tilastot akun tiedoista
-@app.get("/api/measurement/battery/current")
+@battery_router.get("/api/measurement/battery/current")
 async def get_most_recent_values_from_battery(dw: DW):
     _query = text("SELECT s.sensor_name AS sensor, m.value AS value FROM measurements_fact AS m JOIN dates_dim AS d ON d.date_key = m.date_key JOIN sensors_dim AS s ON s.sensor_key = m.sensor_key WHERE s.device_id = 'TB_batterypack' AND m.date_key = (SELECT MAX(date_key) FROM measurements_fact WHERE sensor_key = s.sensor_key) ORDER BY s.sensor_id;")
     rows = dw.execute(_query)
@@ -56,7 +64,7 @@ async def get_most_recent_values_from_battery(dw: DW):
 
 
 # Haetaan päiväkohtainen kokonaistuotto tunneittain ryhmiteltynä:
-@app.get("/api/measurement/production/total/hourly_for_day/{date}")
+@production_router.get("/api/measurement/production/total/hourly_for_day/{date}")
 async def get_total_production_statistics_hourly_for_a_day(dw: DW, date: str):
     """
     Get production stats from a given day grouped by hour. String format YYYY-MM-DD
@@ -71,7 +79,7 @@ async def get_total_production_statistics_hourly_for_a_day(dw: DW, date: str):
 
 
 # Haetaan päiväkohtainen kokonaistuotto:
-@app.get("/api/measurement/production/total/day/{date}")
+@production_router.get("/api/measurement/production/total/day/{date}")
 async def get_total_production_statistics_for_a_day(dw: DW, date: str):
     """
     Get production stats from a given day. String format YYYY-MM-DD
@@ -86,7 +94,7 @@ async def get_total_production_statistics_for_a_day(dw: DW, date: str):
 
 
 # Haetaan kaikelle tuotolle päiväkohtainen keskiarvo:
-@app.get("/api/measurement/production/avg/day/{date}")
+@production_router.get("/api/measurement/production/avg/day/{date}")
 async def get_avg_production_statistics_for_a_day(dw: DW, date: str):
     """
     Get production stats from a given day. String format YYYY-MM-DD
@@ -101,7 +109,7 @@ async def get_avg_production_statistics_for_a_day(dw: DW, date: str):
 
 
 # Haetaan viikkokohtainen kokonaistuotto päivittäin ryhmiteltynä:
-@app.get("/api/measurement/production/total/daily_for_week/{date}")
+@production_router.get("/api/measurement/production/total/daily_for_week/{date}")
 async def get_total_production_statistics_daily_for_a_week(dw: DW, date: str):
     """
     Get production stats from a given week grouped by day. String format YYYY-MM-DD
@@ -118,7 +126,7 @@ async def get_total_production_statistics_daily_for_a_week(dw: DW, date: str):
 
 
 # Haetaan viikkokohtainen kokonaistuotto:
-@app.get("/api/measurement/production/total/week/{date}")
+@production_router.get("/api/measurement/production/total/week/{date}")
 async def get_total_production_statistics_for_a_week(dw: DW, date: str):
     """
     Get production stats from a given week. String format YYYY-MM-DD
@@ -134,7 +142,7 @@ async def get_total_production_statistics_for_a_week(dw: DW, date: str):
 
 
 # Haetaan viikkokohtainen keskiarvotuotto:
-@app.get("/api/measurement/production/avg/week/{date}")
+@production_router.get("/api/measurement/production/avg/week/{date}")
 async def get_avg_production_statistics_for_a_week(dw: DW, date: str):
     """
     Get production stats from a given week. String format YYYY-MM-DD
@@ -150,7 +158,7 @@ async def get_avg_production_statistics_for_a_week(dw: DW, date: str):
 
 
 # Haetaan kuukausikohtainen kokonaistuotto päivittäin ryhmiteltynä:
-@app.get("/api/measurement/production/total/daily_for_month/{date}")
+@production_router.get("/api/measurement/production/total/daily_for_month/{date}")
 async def get_total_production_statistics_daily_for_a_month(dw: DW, date: str):
     """
     Get production stats from a given month grouped by day. String format YYYY-MM-DD
@@ -167,7 +175,7 @@ async def get_total_production_statistics_daily_for_a_month(dw: DW, date: str):
 
 
 # Haetaan kuukausikohtainen kokonaistuotto:
-@app.get("/api/measurement/production/total/month/{date}")
+@production_router.get("/api/measurement/production/total/month/{date}")
 async def get_total_production_statistics_for_a_month(dw: DW, date: str):
     """
     Get production stats from a given month. String format YYYY-MM-DD
@@ -183,7 +191,7 @@ async def get_total_production_statistics_for_a_month(dw: DW, date: str):
 
 
 # Haetaan kuukausikohtainen keskiarvotuotto:
-@app.get("/api/measurement/production/avg/month/{date}")
+@production_router.get("/api/measurement/production/avg/month/{date}")
 async def get_avg_production_statistics_for_a_month(dw: DW, date: str):
     """
     Get production stats from a given month. String format YYYY-MM-DD
@@ -199,7 +207,7 @@ async def get_avg_production_statistics_for_a_month(dw: DW, date: str):
 
 
 # Haetaan vuosikohtainen kokonaistuotto kuukausittain ryhmiteltynä:
-@app.get("/api/measurement/production/total/monthly_for_year/{date}")
+@production_router.get("/api/measurement/production/total/monthly_for_year/{date}")
 async def get_total_production_statistics_monthly_for_a_year(dw: DW, date: str):
     """
     Get production stats from a given year grouped by month. String format YYYY-MM-DD
@@ -217,7 +225,7 @@ async def get_total_production_statistics_monthly_for_a_year(dw: DW, date: str):
 
 
 # Haetaan vuosikohtainen kokonaistuotto:
-@app.get("/api/measurement/production/total/year/{date}")
+@production_router.get("/api/measurement/production/total/year/{date}")
 async def get_total_production_statistics_for_a_year(dw: DW, date: str):
     """
     Get production stats from a given year. String format YYYY-MM-DD
@@ -232,7 +240,7 @@ async def get_total_production_statistics_for_a_year(dw: DW, date: str):
 
 
 # Haetaan vuosikohtainen keskiarvotuotto:
-@app.get("/api/measurement/production/avg/year/{date}")
+@production_router.get("/api/measurement/production/avg/year/{date}")
 async def get_avg_production_statistics_for_a_year(dw: DW, date: str):
     """
     Get production stats from a given year. String format YYYY-MM-DD
@@ -247,7 +255,7 @@ async def get_avg_production_statistics_for_a_year(dw: DW, date: str):
 
 
 # Haetaan kulutus annetusta päivämäärästä 7-päivän jakso taaksepäin, jotka lajitellaan päiväkohtaisesti.
-@app.get("/api/measurement/consumption/total/daily_for_week/{date}")
+@consumption_router.get("/api/measurement/consumption/total/daily_for_week/{date}")
 async def get_total_consumption_statistics_daily_for_a_week(dw: DW, date: str):
     """
     Get daily consumptions of 7-day period. Last day is the given date. String format YYYY-MM-DD
