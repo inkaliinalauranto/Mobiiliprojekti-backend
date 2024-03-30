@@ -56,6 +56,7 @@ async def get_most_recent_values_from_battery(dw: DW):
 
 
 # Haetaan päiväkohtainen kokonaistuotto tunneittain ryhmiteltynä:
+# Tämä on total production chartin DAY nappia varten.
 @production_router.get("/api/measurement/production/total/hourly_for_day/{date}")
 async def get_total_production_statistics_hourly_for_a_day(dw: DW, date: str):
     """
@@ -70,7 +71,8 @@ async def get_total_production_statistics_hourly_for_a_day(dw: DW, date: str):
     return {"data": data}
 
 
-# Haetaan päiväkohtainen kokonaistuotto:
+# Haetaan päiväkohtainen kokonaistuotto.
+# Tämä on total production screenin DAY-näkymän Total-kohtaa varten.
 @production_router.get("/api/measurement/production/total/day/{date}")
 async def get_total_production_statistics_for_a_day(dw: DW, date: str):
     """
@@ -86,6 +88,7 @@ async def get_total_production_statistics_for_a_day(dw: DW, date: str):
 
 
 # Haetaan kaikelle tuotolle päiväkohtainen keskiarvo:
+# Tämä on total production screenin DAY-näkymän Avg-kohtaa varten.
 @production_router.get("/api/measurement/production/avg/day/{date}")
 async def get_avg_production_statistics_for_a_day(dw: DW, date: str):
     """
@@ -100,7 +103,8 @@ async def get_avg_production_statistics_for_a_day(dw: DW, date: str):
     return {"data": data}
 
 
-# Haetaan viikkokohtainen kokonaistuotto päivittäin ryhmiteltynä:
+# Haetaan viikkokohtainen kokonaistuotto päivittäin ryhmiteltynä.
+# Tämä on total production chartin WEEK nappia varten.
 @production_router.get("/api/measurement/production/total/daily_for_week/{date}")
 async def get_total_production_statistics_daily_for_a_week(dw: DW, date: str):
     """
@@ -118,6 +122,7 @@ async def get_total_production_statistics_daily_for_a_week(dw: DW, date: str):
 
 
 # Haetaan viikkokohtainen kokonaistuotto:
+# Tämä on total production screenin WEEK-näkymän Total-kohtaa varten.
 @production_router.get("/api/measurement/production/total/week/{date}")
 async def get_total_production_statistics_for_a_week(dw: DW, date: str):
     """
@@ -134,6 +139,7 @@ async def get_total_production_statistics_for_a_week(dw: DW, date: str):
 
 
 # Haetaan viikkokohtainen keskiarvotuotto:
+# Tämä on total production screenin WEEK-näkymän Avg-kohtaa varten.
 @production_router.get("/api/measurement/production/avg/week/{date}")
 async def get_avg_production_statistics_for_a_week(dw: DW, date: str):
     """
@@ -150,6 +156,7 @@ async def get_avg_production_statistics_for_a_week(dw: DW, date: str):
 
 
 # Haetaan kuukausikohtainen kokonaistuotto päivittäin ryhmiteltynä:
+# Tämä on total production chartin MONTH nappia varten.
 @production_router.get("/api/measurement/production/total/daily_for_month/{date}")
 async def get_total_production_statistics_daily_for_a_month(dw: DW, date: str):
     """
@@ -166,7 +173,8 @@ async def get_total_production_statistics_daily_for_a_month(dw: DW, date: str):
     return {"data": data}
 
 
-# Haetaan kuukausikohtainen kokonaistuotto:
+# Haetaan kuukausikohtainen kokonaistuotto.
+# Tämä on total production screenin MONTH-näkymän Total-kohtaa varten.
 @production_router.get("/api/measurement/production/total/month/{date}")
 async def get_total_production_statistics_for_a_month(dw: DW, date: str):
     """
@@ -182,7 +190,8 @@ async def get_total_production_statistics_for_a_month(dw: DW, date: str):
     return {"data": data}
 
 
-# Haetaan kuukausikohtainen keskiarvotuotto:
+# Haetaan kuukausikohtainen keskiarvotuotto.
+# Tämä on total production screenin MONTH-näkymän Avg-kohtaa varten.
 @production_router.get("/api/measurement/production/avg/month/{date}")
 async def get_avg_production_statistics_for_a_month(dw: DW, date: str):
     """
@@ -198,7 +207,8 @@ async def get_avg_production_statistics_for_a_month(dw: DW, date: str):
     return {"data": data}
 
 
-# Haetaan vuosikohtainen kokonaistuotto kuukausittain ryhmiteltynä:
+# Haetaan vuosikohtainen kokonaistuotto kuukausittain ryhmiteltynä.
+# Tämä on total production chartin YEAR nappia varten.
 @production_router.get("/api/measurement/production/total/monthly_for_year/{date}")
 async def get_total_production_statistics_monthly_for_a_year(dw: DW, date: str):
     """
@@ -216,7 +226,8 @@ async def get_total_production_statistics_monthly_for_a_year(dw: DW, date: str):
     return {"data": data}
 
 
-# Haetaan vuosikohtainen kokonaistuotto:
+# Haetaan vuosikohtainen kokonaistuotto.
+# Tämä on total production screenin YEAR-näkymän Total-kohtaa varten.
 @production_router.get("/api/measurement/production/total/year/{date}")
 async def get_total_production_statistics_for_a_year(dw: DW, date: str):
     """
@@ -231,7 +242,8 @@ async def get_total_production_statistics_for_a_year(dw: DW, date: str):
     return {"data": data}
 
 
-# Haetaan vuosikohtainen keskiarvotuotto:
+# Haetaan vuosikohtainen keskiarvotuotto.
+# Tämä on total production screenin YEAR-näkymän Avg-kohtaa varten.
 @production_router.get("/api/measurement/production/avg/year/{date}")
 async def get_avg_production_statistics_for_a_year(dw: DW, date: str):
     """
