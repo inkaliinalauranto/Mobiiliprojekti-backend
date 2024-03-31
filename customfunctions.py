@@ -1,25 +1,40 @@
 import datetime
-from calendar import calendar
+from calendar import calendar, monthrange
+
+
+# Generoi nollatietueet SQL datasta puuttuville kuukausille. Syötä queryssä
+# saatu data. Datan pitää olla muotoa [{"month": 1 "total_kwh": 0}]
+def generate_zero_for_missing_months_in_year_query(fetched_data):
+    # Haetaan tietokannasta saadusta datasta tunnit, joissa on dataa
+    months_fetched = [i["month"] for i in fetched_data]
+
+    # Alustetaan new_data list ja index(käytetään returned_datan tiedon hakemisessa)
+    data = []
+    index = 0
+
+    # Silmukoidaan 12 kuukauden verran
+    for month in range(1, 13):
+
+        # Jos kuukausi ei löydy saadusta listasta, luodaan nolla tietue.
+        if month not in months_fetched:
+            monthly_data = {"month": month, "total_kwh": 0}
+
+        # Muussa tapauksessa listataan tietokannasta tullut datasta
+        else:
+            monthly_data = fetched_data[index]
+            index += 1
+
+        data.append(monthly_data)
+
+    return data
 
 
 # Tehdään logiikka, jolla luodaan 0 data tietueet niile päiville, joilta ei saada dataa.
 # Tehdään se tässä, niin ei tarvitse frontendissä tehdä.
 # Datan pitää olla muotoa [{"day": 1 "total_kwh": 0}]
 def generate_zero_for_missing_days_in_month_query(fetched_data, year: int, month: int):
-    # Luodaan listat kuukausista, joissa on 31 ja 30 päivää.
-    _31days = [1, 3, 5, 7, 8, 10, 12]
-    _30days = [4, 6, 9, 11]
 
-    # Määritellään numbers_of_days listojen tai karkausvuoden perusteella.
-    if month in _31days:
-        numbers_of_days = 31
-    elif month in _30days:
-        numbers_of_days = 30
-    else:
-        if calendar.isleap(year):
-            numbers_of_days = 29
-        else:
-            numbers_of_days = 28
+    number_of_days = monthrange(year, month)[1]
 
     # Haetaan tietokannasta saadusta datasta päivät, jotka on saatu.
     days_fetched = [i["day"] for i in fetched_data]
@@ -29,7 +44,7 @@ def generate_zero_for_missing_days_in_month_query(fetched_data, year: int, month
     index = 0
 
     # Silmukoidaan valitun kuukauden päivien lukumäärän mukaisesti
-    for day_number in range(1, numbers_of_days + 1):
+    for day_number in range(1, number_of_days + 1):
 
         # Jos kyseinen päivä ei löydy tietokannasta, luodaan nolla tietue
         if day_number not in days_fetched:
@@ -124,3 +139,27 @@ def generate_zero_for_missing_hours_in_day_for_temperature_query(fetched_data):
 
     return data
 
+
+# Generoidaan nollatietue 7 päivän jaksoon, jos tietoja ei löydy kyseiselle päivälle.
+def generate_zero_for_missing_days_in_7_day_period(fetched_data):
+
+    days_fetched = [i["date"] for i in fetched_data]
+    starting_day = days_fetched[len(days_fetched)-1] - datetime.timedelta(days=6)
+
+    # Alustetaan loopissa käytettävät muuttujat
+    data = []               # Palautettava data
+    index = 0               # Indexin avulla haetaan fetched_datasta oikea data
+    date = starting_day     # Date lisätään joka loopilla 1 päivä
+
+    # Loopataan 7-day period ajan verran
+    for i in range(7):
+        if date not in days_fetched:
+            daily_data = {"date": date, "total_kwh": 0}
+        else:
+            daily_data = fetched_data[index]
+            index += 1
+
+        date = date + datetime.timedelta(days=1)
+        data.append(daily_data)
+
+    return data
