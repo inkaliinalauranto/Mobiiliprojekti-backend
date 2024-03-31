@@ -1,7 +1,8 @@
 from fastapi import APIRouter
 from sqlalchemy import text
 
-from customfunctions import generate_zero_for_missing_hours_in_day_query
+from customfunctions import generate_zero_for_missing_hours_in_day_query, \
+    generate_zero_for_missing_hours_in_day_for_temperature_query
 from db import DW
 
 router = APIRouter(
@@ -28,7 +29,7 @@ async def get_avg_temperature_statistics_hourly_by_day(dw: DW, date: str):
     rows = dw.execute(_query, {"date": date})
     fetched_data = rows.mappings().all()
 
-    data = generate_zero_for_missing_hours_in_day_query(fetched_data)
+    data = generate_zero_for_missing_hours_in_day_for_temperature_query(fetched_data)
 
     return {"data": data}
 
