@@ -10,12 +10,12 @@ router = APIRouter(
 )
 
 
-# Haetaan annetusta ajankohdasta 24 tunnin takaiset keskiarvolämpötilat,
-# jotka lajitellaan tuntikohtaisesti.
-@router.get("/avg/24_hours_before_date/{date}")
-async def get_temperature_statistics_hourly_24_before_date(dw: DW, date: str):
+# Haetaan annetun päivän keskiarvolämpötilat, jotka lajitellaan
+# tuntikohtaisesti.
+@router.get("/avg/hourly/{date}")
+async def get_avg_temperature_statistics_hourly_by_day(dw: DW, date: str):
     """
-    Get hourly temperatures (avg) from 24 hours before the given date.
+    Get hourly temperatures (avg) from a given day.
     String ISO 8601 format YYYY-MM-DD.
     """
     _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as date, "
