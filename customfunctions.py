@@ -49,23 +49,31 @@ def generate_zero_for_missing_days_in_month_query(fetched_data, year: int, month
 # Tarvitsee vuoden karkausvuoden laskentaa varten, sekä viikonnumeron haluttua viikkoa varten
 # Lisäksi tarvitsee datan muotoa [{"date": "2024-03-31", "total_kwh": 0}] (vaati datetime objektin)
 def generate_zero_for_missing_days_in_week_query(fetched_data, year, week_number):
-    # Lasketaan viikon aloituspäivä
+    # Tämä tuottii ongelmia kuukauden vaihtumisen kanssa, johtuen viikon alun laskelmasta,
+    # joka perustuu tällä hetkellä pelkästään vuoden ja viikon numeroon.
+    # Jos viikko kattaa kaksi eri kuukautta, viikon alku ei välttämättä vastaa kuun alkua.
+    #- Dorian
+
+    # Laske viikon alku
     first_day = datetime.date(year, 1, 1)
     start_of_week = first_day + datetime.timedelta(days=(week_number - 1) * 7 - first_day.weekday())
 
-    # Luodaan lista viikonpäivistä datetime objekteina
+    # Säädä viikon alkua vastaamaan vastaavan kuukauden alkua
+    start_of_week -= datetime.timedelta(days=start_of_week.day - 1)
+
+    # Alusta tietoluettelo ja hakemisto fetched_data-tietojen iterointia varten
     dates_of_week = [start_of_week + datetime.timedelta(days=i) for i in range(7)]
 
-    # Alustetaan datalista ja loopataan 7 kertaa. Index on fetched_data itemeiden hakua
+    # Alusta tietoluettelo ja hakemisto fetched_data-tietojen iterointia varten
     data = []
     index = 0
     for i in range(7):
-
-        # Jos saadun datan päiväys löytyy viikkolistasta, lisätään se data
-        if dates_of_week[i] == fetched_data[index]["date"]:
+        # Tarkista, vastaako fetched_data päivämäärä viikon nykyistä päivämäärää
+        if index < len(fetched_data) and dates_of_week[i] == fetched_data[index]["date"]:
             data.append(fetched_data[index])
             index += 1
         else:
+            # Jos vastaavuutta ei löydy, liitä sanakirja, jossa on päivämäärä ja total_kwh-arvo 0
             data.append({"date": dates_of_week[i], "total_kwh": 0})
 
     return data
