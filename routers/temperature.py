@@ -19,8 +19,7 @@ async def get_avg_temperature_statistics_hourly_by_day(dw: DW, date: str):
     Get hourly temperatures (avg) from a given day.
     String ISO 8601 format YYYY-MM-DD.
     """
-    _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as date, "
-                  "d.hour, avg(value) AS temperature "
+    _query = text("SELECT d.hour, avg(value) AS temperature "
                   "FROM temperatures_fact t "
                   "JOIN dates_dim d ON t.date_key = d.date_key "
                   "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) = DATE(:date) "
