@@ -99,7 +99,7 @@ def generate_zero_for_missing_hours_in_day_query(fetched_data):
 
 
 # Nollatietueet lämpötilaan liittyville hourly by day hauille. Syötä queryssä
-# saatu data. Datan pitää olla muotoa [{"hour": 0 "C": 0}]
+# saatu data. Datan pitää olla muotoa [{"hour": 0 "temperature": 0}]
 def generate_zero_for_missing_hours_in_day_for_temperature_query(fetched_data):
     # Haetaan tietokannasta saadusta datasta tunnit, joissa on dataa
     hours_fetched = [i["hour"] for i in fetched_data]
@@ -113,7 +113,7 @@ def generate_zero_for_missing_hours_in_day_for_temperature_query(fetched_data):
 
         # Jos tunti ei löydy saadusta listasta, luodaan nolla tietue.
         if hour not in hours_fetched:
-            hourly_data = {"hour": hour, "C": 0}
+            hourly_data = {"hour": hour, "temperature": 0}
 
         # Muussa tapauksessa listataan tietokannasta tullut datasta
         else:
