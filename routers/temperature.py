@@ -23,6 +23,7 @@ async def get_avg_temperature_statistics_hourly_by_day(dw: DW, date: str):
                   "FROM temperatures_fact t "
                   "JOIN dates_dim d ON t.date_key = d.date_key "
                   "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) = DATE(:date) "
+                  "AND t.sensor_key = 125 "
                   "GROUP BY d.hour "
                   "ORDER BY d.hour;")
     rows = dw.execute(_query, {"date": date})
