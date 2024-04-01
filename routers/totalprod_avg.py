@@ -16,7 +16,7 @@ router = APIRouter(
 @router.get("/day/{date}")
 async def get_total_production_statistic_avg_day(dw: DW, date: str):
     """
-    Get hourly (avg) productions stats for a given day.
+    Get hour (avg) production stats for a given day.
     ISO 8601 format YYYY-MM-DD.
     """
     _query = text("SELECT SUM(p.value)/24 as avg_kwh "
@@ -37,7 +37,7 @@ async def get_total_production_statistic_avg_day(dw: DW, date: str):
 @router.get("/week/{date}")
 async def get_total_production_statistic_avg_week(dw: DW, date: str):
     """
-    Get daily (avg) production stats for a given week. ISO 8601 format YYYY-MM-DD.
+    Get day (avg) production stats for a given week. ISO 8601 format YYYY-MM-DD.
     """
     _query = text("SELECT SUM(p.value)/7 AS avg_kwh "
                   "FROM productions_fact p "
@@ -57,7 +57,7 @@ async def get_total_production_statistic_avg_week(dw: DW, date: str):
 @router.get("/month/{date}")
 async def get_total_production_statistic_avg_month(dw: DW, date: str):
     """
-    Get daily (avg) production stats for a given month.
+    Get day (avg) production stats for a given month.
     ISO 8601 format YYYY-MM-DD.
     """
     _date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
@@ -68,6 +68,27 @@ async def get_total_production_statistic_avg_month(dw: DW, date: str):
                   "JOIN dates_dim d ON p.date_key = d.date_key "
                   "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) = :date;")
     rows = dw.execute(_query, {"number_of_days": number_of_days, "date": date})
+    data = rows.mappings().all()
+
+    if data[0]["avg_kwh"] is None:
+        data = [{"avg_kwh": 0}]
+
+    return {"data": data}
+
+
+# Haetaan vuoden kokonaistuoton keskiarvo kuukautta kohden.
+# Tämä on total production screenin YEAR-näkymän Avg-kohtaa varten.
+@router.get("/year/{date}")
+async def get_avg_production_statistics_for_a_year(dw: DW, date: str):
+    """
+    Get month (avg) production stats for a given year.
+    ISO 8601 format YYYY-MM-DD.
+    """
+    _query = text("SELECT SUM(p.value)/12 AS avg_kwh "
+                  "FROM productions_fact p "
+                  "JOIN dates_dim d ON p.date_key = d.date_key "
+                  "WHERE YEAR(CONCAT(d.year, '-', d.month, '-', d.day)) = YEAR(:date);")
+    rows = dw.execute(_query, {"date": date})
     data = rows.mappings().all()
 
     if data[0]["avg_kwh"] is None:

@@ -149,19 +149,5 @@ async def get_total_production_statistic_monthly_by_year(dw: DW, date: str):
     return {"data": data}
 
 
-# Haetaan vuosikohtainen keskiarvotuotto.
-# Tämä on total production screenin YEAR-näkymän Avg-kohtaa varten.
-@router.get("/avg/year/{date}")
-async def get_avg_production_statistics_for_a_year(dw: DW, date: str):
-    """
-    Get production stats from a given year. String format YYYY-MM-DD
-    """
-    _query = text("SELECT AVG(p.value) AS total_production FROM productions_fact p "
-                  "JOIN dates_dim d ON p.date_key = d.date_key "
-                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
-                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 YEAR) AND :date;")
-    rows = dw.execute(_query, {"date": date})
-    data = rows.mappings().all()
-    return {"data": data}
 
 
