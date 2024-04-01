@@ -41,7 +41,7 @@ async def get_total_production_statistics_daily_seven_day_period(dw: DW, date: s
         time_key = tuple(fetched_data[0].keys())[0]
         consumption_key = tuple(fetched_data[0].keys())[1]
 
-    data = generate_zero_for_missing_days_in_7_day_period_with_keys(fetched_data, _date, consumption_key, time_key)
+    data = generate_zero_for_missing_days_in_7_day_period_with_keys(fetched_data, _date, time_key, consumption_key)
 
     return {"data": data}
 
