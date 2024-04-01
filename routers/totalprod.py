@@ -125,23 +125,6 @@ async def get_total_production_statistics_daily_for_a_month(dw: DW, date: str):
     return {"data": data}
 
 
-# Haetaan kuukausikohtainen kokonaistuotto.
-# Tämä on total production screenin MONTH-näkymän Total-kohtaa varten.
-@router.get("/total/month/{date}")
-async def get_total_production_statistics_for_a_month(dw: DW, date: str):
-    """
-    Get production stats from a given month. String format YYYY-MM-DD
-    """
-    _query = text("SELECT SUM(p.value) AS total_production "
-                  "FROM productions_fact p "
-                  "JOIN dates_dim d ON p.date_key = d.date_key "
-                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
-                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 MONTH) AND :date;")
-    rows = dw.execute(_query, {"date": date})
-    data = rows.mappings().all()
-    return {"data": data}
-
-
 # Haetaan kuukausikohtainen keskiarvotuotto.
 # Tämä on total production screenin MONTH-näkymän Avg-kohtaa varten.
 @router.get("/avg/month/{date}")
