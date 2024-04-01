@@ -11,6 +11,28 @@ router = APIRouter(
 )
 
 
+# Haetaan edellisen 7 päivän ajalta kokonaistuoton keskiarvo päivää kohden.
+# Tämä on MainScreenin PANEELIN graphia varten.
+@router.get("/seven_day_period/{date}")
+async def get_total_production_statistic_avg_seven_day_period(dw: DW, date: str):
+    """
+    Get day production (avg) for a given 7-day period.
+    ISO 8601 format YYYY-MM-DD.
+    """
+    _query = text("SELECT sum(value)/7 AS avg_kwh FROM productions_fact p "
+                  "JOIN dates_dim d ON p.date_key = d.date_key "
+                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
+                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND :date")
+
+    rows = dw.execute(_query, {"date": date})
+    data = rows.mappings().all()
+
+    if data[0]["avg_kwh"] is None:
+        data = [{"avg_kwh": 0}]
+
+    return {"data": data}
+
+
 # Haetaan päivän kokonaistuoton keskiarvo tuntia kohden:
 # Tämä on total production screenin DAY-näkymän Avg-kohtaa varten.
 @router.get("/day/{date}")

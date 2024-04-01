@@ -9,6 +9,28 @@ router = APIRouter(
 )
 
 
+# Haetaan 7 päivän jakson kokonaistuoton summa.
+# Tämä on MainScreenin PANEELIN graphia varten.
+@router.get("/seven_day_period/{date}")
+async def get_total_production_statistics_sum_seven_day_period(dw: DW, date: str):
+    """
+    Get production (sum) for a given 7-day period.
+    ISO 8601 format YYYY-MM-DD. String ISO 8601 format YYYY-MM-DD.
+    """
+    _query = text("SELECT sum(value) AS sum_kwh FROM productions_fact p "
+                  "JOIN dates_dim d ON p.date_key = d.date_key "
+                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
+                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND :date ")
+
+    rows = dw.execute(_query, {"date": date})
+    data = rows.mappings().all()
+
+    if data[0]["sum_kwh"] is None:
+        data = [{"sum_kwh": 0}]
+
+    return {"data": data}
+
+
 # Haetaan päiväkohtainen kokonaistuotto.
 # Tämä on total production screenin DAY-näkymän Total-kohtaa varten.
 @router.get("/day/{date}")

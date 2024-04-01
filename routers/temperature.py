@@ -13,8 +13,8 @@ router = APIRouter(
 
 # Haetaan annetun päivän keskiarvolämpötilat, jotka lajitellaan
 # tuntikohtaisesti.
-@router.get("/avg/hourly/{date}")
-async def get_avg_temperature_statistics_hourly_by_day(dw: DW, date: str):
+@router.get("/indoor/avg/hourly/{date}")
+async def get_indoor_avg_temperature_statistics_hourly_by_day(dw: DW, date: str):
     """
     Get hourly temperatures (avg) from a given day.
     String ISO 8601 format YYYY-MM-DD.

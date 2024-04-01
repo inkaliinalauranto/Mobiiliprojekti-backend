@@ -10,7 +10,7 @@ import datetime
 
 router = APIRouter(
     prefix='/api/measurement/production/total',
-    tags=['Production']
+    tags=['Production - Total']
 )
 
 
