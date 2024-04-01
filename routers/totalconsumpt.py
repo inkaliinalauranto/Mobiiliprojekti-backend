@@ -28,7 +28,8 @@ async def get_total_consumption_statistics_daily_seven_day_period(dw: DW, date: 
     rows = dw.execute(_query, {"date": date})
     fetched_data = rows.mappings().all()
 
-    data = generate_zero_for_missing_days_in_7_day_period(fetched_data)
+    _date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+    data = generate_zero_for_missing_days_in_7_day_period(fetched_data, _date)
 
     return {"data": data}
 

@@ -145,10 +145,11 @@ def generate_zero_for_missing_hours_in_day_for_temperature_query(fetched_data):
 
 
 # Generoidaan nollatietue 7 päivän jaksoon, jos tietoja ei löydy kyseiselle päivälle.
-def generate_zero_for_missing_days_in_7_day_period(fetched_data):
+# Vaatii datetime objectin ja SQL querystä tulleen datan
+def generate_zero_for_missing_days_in_7_day_period(fetched_data, date: datetime.date):
 
     days_fetched = [i["date"] for i in fetched_data]
-    starting_day = days_fetched[len(days_fetched)-1] - datetime.timedelta(days=6)
+    starting_day = date - datetime.timedelta(days=6)
 
     # Alustetaan loopissa käytettävät muuttujat
     data = []               # Palautettava data
