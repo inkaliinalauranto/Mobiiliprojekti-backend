@@ -1,6 +1,9 @@
+from calendar import monthrange
+
 from fastapi import APIRouter
 from sqlalchemy import text
 from db import DW
+import datetime
 
 router = APIRouter(
     prefix='/api/measurement/production/total/avg',
@@ -34,7 +37,7 @@ async def get_total_production_statistic_avg_day(dw: DW, date: str):
 @router.get("/week/{date}")
 async def get_total_production_statistic_avg_week(dw: DW, date: str):
     """
-    Get daily (avg) production stats for a given week. ISO 8601 format YYYY-MM-DD
+    Get daily (avg) production stats for a given week. ISO 8601 format YYYY-MM-DD.
     """
     _query = text("SELECT SUM(p.value)/7 AS avg_kwh "
                   "FROM productions_fact p "
@@ -47,3 +50,28 @@ async def get_total_production_statistic_avg_week(dw: DW, date: str):
         data = [{"avg_kwh": 0}]
 
     return {"data": data}
+
+
+# Haetaan kuukauden kokonaistuoton keskiarvo päivää kohden.
+# Tämä on total production screenin MONTH-näkymän Avg-kohtaa varten.
+@router.get("/month/{date}")
+async def get_total_production_statistic_avg_month(dw: DW, date: str):
+    """
+    Get daily (avg) production stats for a given month.
+    ISO 8601 format YYYY-MM-DD.
+    """
+    _date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+    number_of_days = monthrange(_date.year, _date.month)[1]
+
+    _query = text("SELECT SUM(p.value)/:number_of_days AS avg_kwh "
+                  "FROM productions_fact p "
+                  "JOIN dates_dim d ON p.date_key = d.date_key "
+                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) = :date;")
+    rows = dw.execute(_query, {"number_of_days": number_of_days, "date": date})
+    data = rows.mappings().all()
+
+    if data[0]["avg_kwh"] is None:
+        data = [{"avg_kwh": 0}]
+
+    return {"data": data}
+

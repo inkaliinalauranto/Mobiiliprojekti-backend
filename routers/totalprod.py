@@ -3,7 +3,7 @@ from sqlalchemy import text
 
 from customfunctions import generate_zero_for_missing_days_in_7_day_period_with_keys, \
     generate_zero_for_missing_hours_in_day_with_keys, generate_zero_for_missing_days_in_week_query, \
-    generate_zero_for_missing_days_in_month_query
+    generate_zero_for_missing_days_in_month_query, generate_zero_for_missing_months_in_year_query
 from db import DW
 import datetime
 
@@ -125,39 +125,27 @@ async def get_total_production_statistics_daily_for_a_month(dw: DW, date: str):
     return {"data": data}
 
 
-# Haetaan kuukausikohtainen keskiarvotuotto.
-# Tämä on total production screenin MONTH-näkymän Avg-kohtaa varten.
-@router.get("/avg/month/{date}")
-async def get_avg_production_statistics_for_a_month(dw: DW, date: str):
-    """
-    Get production stats from a given month. String format YYYY-MM-DD
-    """
-    _query = text("SELECT AVG(p.value) AS total_production "
-                  "FROM productions_fact p "
-                  "JOIN dates_dim d ON p.date_key = d.date_key "
-                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
-                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 MONTH) AND :date;")
-    rows = dw.execute(_query, {"date": date})
-    data = rows.mappings().all()
-    return {"data": data}
-
-
 # Haetaan vuosikohtainen kokonaistuotto kuukausittain ryhmiteltynä.
 # Tämä on total production chartin YEAR nappia varten.
-@router.get("/total/monthly_for_year/{date}")
-async def get_total_production_statistics_monthly_for_a_year(dw: DW, date: str):
+@router.get("/monthly/{date}")
+async def get_total_production_statistic_monthly_by_year(dw: DW, date: str):
     """
-    Get production stats from a given year grouped by month. String format YYYY-MM-DD
+    Get production stats from a given year grouped by month. ISO 8601 format YYYY-MM-DD
     """
-    _query = text("SELECT CONCAT_WS('-', d.year, d.month) AS year_and_month, "
-                  "SUM(p.value) AS total_production "
+    _date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+    year = _date.year
+
+    _query = text("SELECT d.month, SUM(p.value) AS total_kwh "
                   "FROM productions_fact p "
                   "JOIN dates_dim d ON p.date_key = d.date_key "
-                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
-                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 YEAR) AND :date "
+                  "WHERE d.year = ':year' "
                   "GROUP BY d.month;")
-    rows = dw.execute(_query, {"date": date})
-    data = rows.mappings().all()
+    rows = dw.execute(_query, {"year": year})
+    fetched_data = rows.mappings().all()
+
+    # Generoidaan puuttuvat nollatietueet mukaan dataan ja palautetaan se.
+    data = generate_zero_for_missing_months_in_year_query(fetched_data)
+
     return {"data": data}
 
 
