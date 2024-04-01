@@ -69,11 +69,7 @@ async def get_total_consumption_statistic_daily_by_week(dw: DW, date: str):
     fetched_data = rows.mappings().all()
 
     _date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
-    year = _date.year
-    _week_query = text("SELECT week FROM dates_dim WHERE week = WEEK(:date, 1) LIMIT 1;")
-    week_number = dw.execute(_week_query, {"date": date}).mappings().one()
-
-    data = generate_zero_for_missing_days_in_week_query(fetched_data, year, week_number['week'])
+    data = generate_zero_for_missing_days_in_week_query(fetched_data, _date)
 
     return {"data": data}
 

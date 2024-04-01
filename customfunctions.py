@@ -1,5 +1,5 @@
 import datetime
-from calendar import calendar, monthrange
+from calendar import calendar, monthrange, weekday
 
 
 # Generoi nollatietueet SQL datasta puuttuville kuukausille. Syötä queryssä
@@ -62,34 +62,30 @@ def generate_zero_for_missing_days_in_month_query(fetched_data, year: int, month
 
 # Palauttaa viikon tilastot. Jos viikonpäivälle ei löydy dataa, siihen lisätään tyhjä tietue.
 # Tarvitsee vuoden karkausvuoden laskentaa varten, sekä viikonnumeron haluttua viikkoa varten
-# Lisäksi tarvitsee datan muotoa [{"date": "2024-03-31", "total_kwh": 0}] (vaati datetime objektin)
-def generate_zero_for_missing_days_in_week_query(fetched_data, year, week_number):
-    # Tämä tuottii ongelmia kuukauden vaihtumisen kanssa, johtuen viikon alun laskelmasta,
-    # joka perustuu tällä hetkellä pelkästään vuoden ja viikon numeroon.
-    # Jos viikko kattaa kaksi eri kuukautta, viikon alku ei välttämättä vastaa kuun alkua.
-    #- Dorian
+# Lisäksi tarvitsee datan muotoa [{"date": "2024-03-31", "total_kwh": 0}] ja date datetime.date objekti
+def generate_zero_for_missing_days_in_week_query(fetched_data, date: datetime.date):
 
-    # Laske viikon alku
-    first_day = datetime.date(year, 1, 1)
-    start_of_week = first_day + datetime.timedelta(days=(week_number - 1) * 7 - first_day.weekday())
+    # Haetaan viikonpäivä, ja lasketaan sen avulla aloituspäivä
+    _weekday = weekday(date.year, date.month, date.day)
+    day_of_week = date - datetime.timedelta(days=_weekday)
 
-    # Säädä viikon alkua vastaamaan vastaavan kuukauden alkua
-    start_of_week -= datetime.timedelta(days=start_of_week.day - 1)
-
-    # Alusta tietoluettelo ja hakemisto fetched_data-tietojen iterointia varten
-    dates_of_week = [start_of_week + datetime.timedelta(days=i) for i in range(7)]
+    dates_fetched = [i["date"] for i in fetched_data]
 
     # Alusta tietoluettelo ja hakemisto fetched_data-tietojen iterointia varten
     data = []
     index = 0
     for i in range(7):
-        # Tarkista, vastaako fetched_data päivämäärä viikon nykyistä päivämäärää
-        if index < len(fetched_data) and dates_of_week[i] == fetched_data[index]["date"]:
+        # Luodaan nollatietue jos tietoa ei ole löytynyt fetched_datasta
+        if day_of_week not in dates_fetched:
+            data.append({"date": day_of_week, "total_kwh": 0})
+
+        # Muutoin lisätään aito data listaan
+        else:
             data.append(fetched_data[index])
             index += 1
-        else:
-            # Jos vastaavuutta ei löydy, liitä sanakirja, jossa on päivämäärä ja total_kwh-arvo 0
-            data.append({"date": dates_of_week[i], "total_kwh": 0})
+
+        # Vaihdetaan seuraavana vuorossa olevaan viikonpäivään
+        day_of_week += datetime.timedelta(days=1)
 
     return data
 
