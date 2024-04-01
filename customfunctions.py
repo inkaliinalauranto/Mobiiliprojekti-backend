@@ -170,10 +170,11 @@ def generate_zero_for_missing_days_in_7_day_period(fetched_data, date: datetime.
     return data
 
 
-# Generoidaan nollatietue 7 päivän jaksoon, jos tietoja ei löydy kyseiselle päivälle.
-# Vaatii datetime objectin ja SQL querystä tulleen datan
+# Generoidaan nollatietue 7 päivän jaksoon, jos tietoja ei löydy kyseiselle
+# päivälle. Vaatii datetime objectin, SQL querystä tulleen datan sekä
+# ajankohdan ja arvon avaimet.
 def generate_zero_for_missing_days_in_7_day_period_with_keys(fetched_data, date: datetime.date, time_key, unit_key):
-    days_fetched = [i["date"] for i in fetched_data]
+    days_fetched = [i[time_key] for i in fetched_data]
     starting_day = date - datetime.timedelta(days=6)
 
     # Alustetaan loopissa käytettävät muuttujat
@@ -191,6 +192,34 @@ def generate_zero_for_missing_days_in_7_day_period_with_keys(fetched_data, date:
 
         date = date + datetime.timedelta(days=1)
         data.append(daily_data)
+
+    return data
+
+
+# Nollatietueet hourly by day hauille. Syötä queryssä saatu data sekä
+# ajankohdan ja arvona avaimet. Datan pitää olla muotoa
+# [{"hour": 0 "temperature": 0}].
+def generate_zero_for_missing_hours_in_day_with_keys(fetched_data, time_key, unit_key):
+    # Haetaan tietokannasta saadusta datasta tunnit, joissa on dataa
+    hours_fetched = [i[time_key] for i in fetched_data]
+
+    # Alustetaan new_data list ja index(käytetään returned_datan tiedon hakemisessa)
+    data = []
+    index = 0
+
+    # Silmukoidaan vuorokauden tuntien verran
+    for hour in range(24):
+
+        # Jos tunti ei löydy saadusta listasta, luodaan nolla tietue.
+        if hour not in hours_fetched:
+            hourly_data = {time_key: hour, unit_key: 0}
+
+        # Muussa tapauksessa listataan tietokannasta tullut datasta
+        else:
+            hourly_data = fetched_data[index]
+            index += 1
+
+        data.append(hourly_data)
 
     return data
 
