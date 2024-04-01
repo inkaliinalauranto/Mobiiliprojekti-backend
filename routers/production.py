@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from sqlalchemy import text
 
-from customfunctions import generate_zero_for_missing_days_in_7_day_period_with_unit_key
+from customfunctions import generate_zero_for_missing_days_in_7_day_period_with_keys
 from db import DW
 import datetime
 
@@ -12,7 +12,7 @@ router = APIRouter(
 )
 
 
-# Haetaan 7 edelliseltä päivältä kokonaiskulutus, joka ryhmitellään päivittäin.
+# Haetaan 7 edelliseltä päivältä kokonaistuotto, joka ryhmitellään päivittäin.
 # Tämä on MainScreenin PANEELIN graafia varten.
 @router.get("/seven_day_period/{date}")
 async def get_total_production_statistics_daily_seven_day_period(dw: DW, date: str):
@@ -21,39 +21,55 @@ async def get_total_production_statistics_daily_seven_day_period(dw: DW, date: s
     (7-day period) grouped by hour. String format YYYY-MM-DD.
     """
     _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as date, "
-                  "SUM(p.value) AS total_kwh FROM productions_fact p "
+                  "SUM(p.value) AS total_kwh "
+                  "FROM productions_fact p "
                   "JOIN dates_dim d ON p.date_key = d.date_key "
                   "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
                   "BETWEEN DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND :date "
                   "GROUP BY d.day "
                   "ORDER BY date;")
+
     rows = dw.execute(_query, {"date": date})
     fetched_data = rows.mappings().all()
     _date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
-    consumption_unit = "total_kwh"
+
+    time_key = "date"
+    consumption_key = "total_kwh"
 
     if len(fetched_data) > 0:
-        consumption_unit = tuple(fetched_data[0].keys())[1]
+        time_key = tuple(fetched_data[0].keys())[0]
+        consumption_key = tuple(fetched_data[0].keys())[1]
 
-    data = generate_zero_for_missing_days_in_7_day_period_with_unit_key(fetched_data, _date, consumption_unit)
+    data = generate_zero_for_missing_days_in_7_day_period_with_keys(fetched_data, _date, consumption_key, time_key)
 
     return {"data": data}
 
 
-# Haetaan päiväkohtainen kokonaistuotto tunneittain ryhmiteltynä:
-# Tämä on total production chartin DAY nappia varten.
-@router.get("/total/hourly_for_day/{date}")
-async def get_total_production_statistics_hourly_for_a_day(dw: DW, date: str):
-    """
-    Get production stats from a given day grouped by hour. String format YYYY-MM-DD
-    """
-    _query = text("SELECT SUM(p.value) AS total_production, d.hour "
-                  "FROM productions_fact p JOIN dates_dim d ON p.date_key = d.date_key "
-                  "WHERE CONCAT_WS('-', d.year, d.month, d.day) = DATE(:date) "
-                  "GROUP BY d.hour;")
-    rows = dw.execute(_query, {"date": date})
-    data = rows.mappings().all()
-    return {"data": data}
+# # Haetaan päiväkohtainen kokonaistuotto tunneittain ryhmiteltynä:
+# # Tämä on total production chartin DAY nappia varten.
+# @router.get("/hourly/{date}")
+# async def get_total_production_statistics_hourly_by_day(dw: DW, date: str):
+#     """
+#     Get production stats (sum) from a given day grouped by hour.
+#     String format YYYY-MM-DD.
+#     """
+#     _query = text("SELECT d.hour, SUM(p.value) AS total_kwh "
+#                   "FROM productions_fact p "
+#                   "JOIN dates_dim d ON p.date_key = d.date_key "
+#                   "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) = :date "
+#                   "GROUP BY d.hour "
+#                   "ORDER BY d.hour;")
+#
+#     rows = dw.execute(_query, {"date": date})
+#     fetched_data = rows.mappings().all()
+#     consumption_unit = "total_kwh"
+#
+#     if len(fetched_data) > 0:
+#         consumption_unit = tuple(fetched_data[0].keys())[1]
+#
+#     data = generate_zero_for_missing_hours_in_day_query_with_key(fetched_data, consumption_unit)
+#
+#     return {"data": data}
 
 
 # Haetaan päiväkohtainen kokonaistuotto.

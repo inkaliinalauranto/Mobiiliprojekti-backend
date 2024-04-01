@@ -172,8 +172,7 @@ def generate_zero_for_missing_days_in_7_day_period(fetched_data, date: datetime.
 
 # Generoidaan nollatietue 7 päivän jaksoon, jos tietoja ei löydy kyseiselle päivälle.
 # Vaatii datetime objectin ja SQL querystä tulleen datan
-def generate_zero_for_missing_days_in_7_day_period_with_unit_key(fetched_data, date: datetime.date, key):
-
+def generate_zero_for_missing_days_in_7_day_period_with_keys(fetched_data, date: datetime.date, time_key, unit_key):
     days_fetched = [i["date"] for i in fetched_data]
     starting_day = date - datetime.timedelta(days=6)
 
@@ -185,7 +184,7 @@ def generate_zero_for_missing_days_in_7_day_period_with_unit_key(fetched_data, d
     # Loopataan 7-day period ajan verran
     for i in range(7):
         if date not in days_fetched:
-            daily_data = {"date": date, key: 0}
+            daily_data = {time_key: date, unit_key: 0}
         else:
             daily_data = fetched_data[index]
             index += 1
