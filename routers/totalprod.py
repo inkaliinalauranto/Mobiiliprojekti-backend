@@ -2,7 +2,8 @@ from fastapi import APIRouter
 from sqlalchemy import text
 
 from customfunctions import generate_zero_for_missing_days_in_7_day_period_with_keys, \
-    generate_zero_for_missing_hours_in_day_with_keys, generate_zero_for_missing_days_in_week_query
+    generate_zero_for_missing_hours_in_day_with_keys, generate_zero_for_missing_days_in_week_query, \
+    generate_zero_for_missing_days_in_month_query
 from db import DW
 import datetime
 
@@ -98,19 +99,29 @@ async def get_total_production_statistic_daily_by_week(dw: DW, date: str):
 
 # Haetaan kuukausikohtainen kokonaistuotto päivittäin ryhmiteltynä:
 # Tämä on total production chartin MONTH nappia varten.
-@router.get("/total/daily_for_month/{date}")
+@router.get("/daily/month/{date}")
 async def get_total_production_statistics_daily_for_a_month(dw: DW, date: str):
     """
-    Get production stats from a given month grouped by day. String format YYYY-MM-DD
+    Get total production from a given month grouped by day.
+    Month is calculated from date string, ISO 8601 format YYYY-MM-DD.
     """
-    _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as day, "
-                  "SUM(p.value) AS total_production FROM productions_fact p "
+
+    _date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+
+    year = _date.year
+    month = _date.month
+
+    _query = text("SELECT d.day, SUM(p.value) AS total_kwh "
+                  "FROM productions_fact p "
                   "JOIN dates_dim d ON p.date_key = d.date_key "
-                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
-                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 MONTH) AND :date "
+                  "WHERE d.year = ':year' AND d.month = ':month' "
                   "GROUP BY d.day;")
-    rows = dw.execute(_query, {"date": date})
-    data = rows.mappings().all()
+    rows = dw.execute(_query, {"year": year, "month": month})
+    fetched_data = rows.mappings().all()
+
+    # Generoidaan puuttuvat nollatietueet mukaan dataan ja palautetaan se.
+    data = generate_zero_for_missing_days_in_month_query(fetched_data, year, month)
+
     return {"data": data}
 
 
