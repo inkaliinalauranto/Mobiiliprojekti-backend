@@ -96,23 +96,6 @@ async def get_total_production_statistic_daily_by_week(dw: DW, date: str):
     return {"data": data}
 
 
-# Haetaan viikkokohtainen keskiarvotuotto:
-# Tämä on total production screenin WEEK-näkymän Avg-kohtaa varten.
-@router.get("/avg/week/{date}")
-async def get_avg_production_statistics_for_a_week(dw: DW, date: str):
-    """
-    Get production stats from a given week. String format YYYY-MM-DD
-    """
-    _query = text("SELECT AVG(p.value) AS total_production "
-                  "FROM productions_fact p "
-                  "JOIN dates_dim d ON p.date_key = d.date_key "
-                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
-                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND :date;")
-    rows = dw.execute(_query, {"date": date})
-    data = rows.mappings().all()
-    return {"data": data}
-
-
 # Haetaan kuukausikohtainen kokonaistuotto päivittäin ryhmiteltynä:
 # Tämä on total production chartin MONTH nappia varten.
 @router.get("/total/daily_for_month/{date}")
