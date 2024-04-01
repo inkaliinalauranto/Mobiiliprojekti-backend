@@ -1,12 +1,43 @@
 from fastapi import APIRouter
 from sqlalchemy import text
+
+from customfunctions import generate_zero_for_missing_days_in_7_day_period_with_unit_key
 from db import DW
+import datetime
 
 
 router = APIRouter(
-    prefix='/api/measurement/production',
+    prefix='/api/measurement/production/total',
     tags=['Production']
 )
+
+
+# Haetaan 7 edelliseltä päivältä kokonaiskulutus, joka ryhmitellään päivittäin.
+# Tämä on MainScreenin PANEELIN graafia varten.
+@router.get("/seven_day_period/{date}")
+async def get_total_production_statistics_daily_seven_day_period(dw: DW, date: str):
+    """
+    Get production stats (total) from 7 days before the given date
+    (7-day period) grouped by hour. String format YYYY-MM-DD.
+    """
+    _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as date, "
+                  "SUM(p.value) AS total_kwh FROM productions_fact p "
+                  "JOIN dates_dim d ON p.date_key = d.date_key "
+                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
+                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND :date "
+                  "GROUP BY d.day "
+                  "ORDER BY date;")
+    rows = dw.execute(_query, {"date": date})
+    fetched_data = rows.mappings().all()
+    _date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
+    consumption_unit = "total_kwh"
+
+    if len(fetched_data) > 0:
+        consumption_unit = tuple(fetched_data[0].keys())[1]
+
+    data = generate_zero_for_missing_days_in_7_day_period_with_unit_key(fetched_data, _date, consumption_unit)
+
+    return {"data": data}
 
 
 # Haetaan päiväkohtainen kokonaistuotto tunneittain ryhmiteltynä:
