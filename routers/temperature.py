@@ -1,24 +1,24 @@
+import datetime
 from fastapi import APIRouter
 from sqlalchemy import text
-
-from customfunctions import generate_zero_for_missing_hours_in_day_with_keys
+from customfunctions import generate_zero_for_missing_hours_in_day_with_keys, generate_zero_for_missing_days_in_week_query_with_keys
 from db import DW
 
 router = APIRouter(
-    prefix='/api/measurement/temperature',
+    prefix='/api/measurement/temperature/avg/indoor',
     tags=['Temperature']
 )
 
 
 # Haetaan annetun päivän keskiarvolämpötilat, jotka lajitellaan
-# tuntikohtaisesti.
-@router.get("/indoor/avg/hourly/{date}")
-async def get_indoor_avg_temperature_statistics_hourly_by_day(dw: DW, date: str):
+# tuntikohtaisesti. Tämä on total consumption chartin DAY nappia varten.
+@router.get("/hourly/{date}")
+async def get_indoor_avg_temperature_statistic_hourly_by_day(dw: DW, date: str):
     """
     Get hourly temperatures (avg) from a given day.
     String ISO 8601 format YYYY-MM-DD.
     """
-    _query = text("SELECT d.hour, AVG(value) AS °C "
+    _query = text("SELECT d.hour, AVG(t.value) AS avg_°C "
                   "FROM temperatures_fact t "
                   "JOIN dates_dim d ON t.date_key = d.date_key "
                   "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) = DATE(:date) "
@@ -29,13 +29,43 @@ async def get_indoor_avg_temperature_statistics_hourly_by_day(dw: DW, date: str)
     fetched_data = rows.mappings().all()
 
     time_key = "hour"
-    temperature_unit_key = "°C"
+    temperature_unit_key = "avg_°C"
 
     if len(fetched_data) > 0:
         time_key = tuple(fetched_data[0].keys())[0]
         temperature_unit_key = tuple(fetched_data[0].keys())[1]
 
     data = generate_zero_for_missing_hours_in_day_with_keys(fetched_data, time_key, temperature_unit_key)
+
+    return {"data": data}
+
+
+# Haetaan annetun viikon keskiarvolämpötilat, jotka lajitellaan
+# päiväkohtaisesti. Tämä on total consumption chartin WEEK nappia varten.
+@router.get("/daily/week/{date}")
+async def get_indoor_avg_temperature_statistic_daily_by_week(dw: DW, date: str):
+    """
+    Get daily temperatures (avg) from a given week.
+    String ISO 8601 format YYYY-MM-DD.
+    """
+    _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as date, AVG(t.value) AS avg_°C "
+                  "FROM temperatures_fact t "
+                  "JOIN dates_dim d ON t.date_key = d.date_key "
+                  "WHERE WEEK(DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))), 1) = WEEK(:date, 1) "
+                  "AND t.sensor_key = :sensor_key "
+                  "GROUP BY date;")
+    rows = dw.execute(_query, {"date": date, "sensor_key": 125})
+    fetched_data = rows.mappings().all()
+
+    time_key = "date"
+    temperature_unit_key = "avg_°C"
+
+    if len(fetched_data) > 0:
+        time_key = tuple(fetched_data[0].keys())[0]
+        temperature_unit_key = tuple(fetched_data[0].keys())[1]
+
+    _date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+    data = generate_zero_for_missing_days_in_week_query_with_keys(fetched_data, _date, time_key, temperature_unit_key)
 
     return {"data": data}
 

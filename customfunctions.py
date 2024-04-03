@@ -196,3 +196,31 @@ def generate_zero_for_missing_hours_in_day_with_keys(fetched_data, time_key, uni
 
     return data
 
+
+# Palauttaa viikon tilastot. Jos viikonpäivälle ei löydy dataa, siihen lisätään tyhjä tietue.
+# Tarvitsee vuoden karkausvuoden laskentaa varten, sekä viikonnumeron haluttua viikkoa varten
+def generate_zero_for_missing_days_in_week_query_with_keys(fetched_data, date: datetime.date, time_key, unit_key):
+
+    # Haetaan viikonpäivä, ja lasketaan sen avulla aloituspäivä
+    _weekday = weekday(date.year, date.month, date.day)
+    day_of_week = date - datetime.timedelta(days=_weekday)
+
+    dates_fetched = [i[time_key] for i in fetched_data]
+
+    # Alusta tietoluettelo ja hakemisto fetched_data-tietojen iterointia varten
+    data = []
+    index = 0
+    for i in range(7):
+        # Luodaan nollatietue jos tietoa ei ole löytynyt fetched_datasta
+        if day_of_week not in dates_fetched:
+            data.append({time_key: day_of_week, unit_key: 0})
+
+        # Muutoin lisätään aito data listaan
+        else:
+            data.append(fetched_data[index])
+            index += 1
+
+        # Vaihdetaan seuraavana vuorossa olevaan viikonpäivään
+        day_of_week += datetime.timedelta(days=1)
+
+    return data
