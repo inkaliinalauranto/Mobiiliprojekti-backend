@@ -117,33 +117,6 @@ def generate_zero_for_missing_hours_in_day_query(fetched_data):
     return data
 
 
-# Nollatietueet lämpötilaan liittyville hourly by day hauille. Syötä queryssä
-# saatu data. Datan pitää olla muotoa [{"hour": 0 "temperature": 0}]
-def generate_zero_for_missing_hours_in_day_for_temperature_query(fetched_data):
-    # Haetaan tietokannasta saadusta datasta tunnit, joissa on dataa
-    hours_fetched = [i["hour"] for i in fetched_data]
-
-    # Alustetaan new_data list ja index(käytetään returned_datan tiedon hakemisessa)
-    data = []
-    index = 0
-
-    # Silmukoidaan vuorokauden tuntien verran
-    for hour in range(24):
-
-        # Jos tunti ei löydy saadusta listasta, luodaan nolla tietue.
-        if hour not in hours_fetched:
-            hourly_data = {"hour": hour, "temperature": 0}
-
-        # Muussa tapauksessa listataan tietokannasta tullut datasta
-        else:
-            hourly_data = fetched_data[index]
-            index += 1
-
-        data.append(hourly_data)
-
-    return data
-
-
 # Generoidaan nollatietue 7 päivän jaksoon, jos tietoja ei löydy kyseiselle päivälle.
 # Vaatii datetime objectin ja SQL querystä tulleen datan
 def generate_zero_for_missing_days_in_7_day_period(fetched_data, date: datetime.date):
