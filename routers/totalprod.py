@@ -20,14 +20,14 @@ router = APIRouter(
 async def get_total_production_statistic_daily_seven_day_period(dw: DW, date: str):
     """
     Get production stats (total) from 7 days before the given date
-    (7-day period) grouped by hour. String format YYYY-MM-DD.
+    (7-day period) grouped by day. String format YYYY-MM-DD.
     """
     _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as date, "
                   "SUM(p.value) AS total_kwh "
                   "FROM productions_fact p "
                   "JOIN dates_dim d ON p.date_key = d.date_key "
                   "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
-                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND :date "
+                  "BETWEEN DATE_SUB(DATE(:date), INTERVAL 7 DAY) AND :date "
                   "GROUP BY d.day "
                   "ORDER BY date;")
 

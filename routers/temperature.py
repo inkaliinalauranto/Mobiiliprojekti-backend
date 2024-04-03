@@ -3,13 +3,65 @@ from fastapi import APIRouter
 from sqlalchemy import text
 from customfunctions import generate_zero_for_missing_hours_in_day_with_keys, \
     generate_zero_for_missing_days_in_week_query_with_keys, generate_zero_for_missing_days_in_month_query_with_keys, \
-    generate_zero_for_missing_months_in_year_query_with_keys
+    generate_zero_for_missing_months_in_year_query_with_keys, generate_zero_for_missing_days_in_7_day_period_with_keys
 from db import DW
 
 router = APIRouter(
     prefix='/api/measurement/temperature/avg/indoor',
-    tags=['Temperature']
+    tags=['Temperature - Indoor']
 )
+
+
+# Haetaan viimeisin lämpötilatieto:
+@router.get("/indoor/current")
+async def get_most_recent_indoor_temperature(dw: DW):
+    """
+    Get the most recent indoor temperature information.
+    String ISO 8601 format YYYY-MM-DD.
+    """
+    _query = text("SELECT CONCAT_WS(': ', s.device_name, s.sensor_name) AS sensor, t.value "
+                  "FROM sensors_dim s "
+                  "JOIN temperatures_fact t ON s.sensor_key = t.sensor_key "
+                  "WHERE t.date_key = "
+                  "(SELECT MAX(date_key) FROM temperatures_fact WHERE sensor_key = :sensor_key);")
+    rows = dw.execute(_query, {"sensor_key": 125})
+    data = rows.mappings().all()
+
+    if len(data) == 0:
+        data = [{"value": 0}]
+
+    return {"data": data}
+
+
+# Haetaan edellisten 7 päivän keskiarvolämpötilat, jotka lajitellaan
+# päiväkohtaisesti. Tämä on MainScreenin PANEELIN graafia varten.
+@router.get("/seven_day_period/{date}")
+async def get_indoor_avg_temperature_statistic_seven_day_period(dw: DW, date: str):
+    """
+    Get daily temperatures (avg) from 7 days before the given date
+    (7-day period) grouped by day. String ISO 8601 format YYYY-MM-DD.
+    """
+    _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as date, AVG(t.value) AS avg_°C "
+                  "FROM temperatures_fact t "
+                  "JOIN dates_dim d ON t.date_key = d.date_key "
+                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
+                  "BETWEEN DATE_SUB(DATE(:date), INTERVAL 7 DAY) AND :date "
+                  "AND t.sensor_key = :sensor_key "
+                  "GROUP BY date;")
+    rows = dw.execute(_query, {"date": date, "sensor_key": 125})
+    fetched_data = rows.mappings().all()
+
+    time_key = "date"
+    temperature_unit_key = "avg_°C"
+
+    if len(fetched_data) > 0:
+        time_key = tuple(fetched_data[0].keys())[0]
+        temperature_unit_key = tuple(fetched_data[0].keys())[1]
+
+    _date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+    data = generate_zero_for_missing_days_in_7_day_period_with_keys(fetched_data, _date, time_key, temperature_unit_key)
+
+    return {"data": data}
 
 
 # Haetaan annetun päivän keskiarvolämpötilat, jotka lajitellaan
@@ -135,27 +187,6 @@ async def get_indoor_avg_temperature_statistic_monthly_by_year(dw: DW, date: str
         temperature_unit_key = tuple(fetched_data[0].keys())[1]
 
     data = generate_zero_for_missing_months_in_year_query_with_keys(fetched_data, time_key, temperature_unit_key)
-
-    return {"data": data}
-
-
-# Haetaan viimeisin lämpötilatieto:
-@router.get("/indoor/current")
-async def get_most_recent_indoor_temperature(dw: DW):
-    """
-    Get the most recent indoor temperature information.
-    String ISO 8601 format YYYY-MM-DD.
-    """
-    _query = text("SELECT CONCAT_WS(': ', s.device_name, s.sensor_name) AS sensor, t.value "
-                  "FROM sensors_dim s "
-                  "JOIN temperatures_fact t ON s.sensor_key = t.sensor_key "
-                  "WHERE t.date_key = "
-                  "(SELECT MAX(date_key) FROM temperatures_fact WHERE sensor_key = :sensor_key);")
-    rows = dw.execute(_query, {"sensor_key": 125})
-    data = rows.mappings().all()
-
-    if len(data) == 0:
-        data = [{"value": 0}]
 
     return {"data": data}
 
