@@ -7,24 +7,26 @@ from customfunctions import generate_zero_for_missing_hours_in_day_with_keys, \
 from db import DW
 
 router = APIRouter(
-    prefix='/api/measurement/temperature/avg/indoor',
+    prefix='/api/measurement/temperature',
     tags=['Temperature - Indoor']
 )
 
 
-# Haetaan viimeisin lämpötilatieto:
-@router.get("/indoor/current")
-async def get_most_recent_indoor_temperature(dw: DW):
+# Haetaan viimeisimmät lämpötilatiedot eri sensoreista:
+@router.get("/current")
+async def get_most_recent_temperature(dw: DW):
     """
-    Get the most recent indoor temperature information.
-    String ISO 8601 format YYYY-MM-DD.
+    Get the most recent temperature information.
     """
-    _query = text("SELECT CONCAT_WS(': ', s.device_name, s.sensor_name) AS sensor, t.value "
+    _query = text("SELECT CONCAT_WS(':', d.hour, d.min) AS time, "
+                  "CONCAT_WS(': ', s.device_name, s.sensor_name) AS sensor, t.value AS °C "
                   "FROM sensors_dim s "
                   "JOIN temperatures_fact t ON s.sensor_key = t.sensor_key "
-                  "WHERE t.date_key = "
-                  "(SELECT MAX(date_key) FROM temperatures_fact WHERE sensor_key = :sensor_key);")
-    rows = dw.execute(_query, {"sensor_key": 125})
+                  "JOIN dates_dim d ON t.date_key = d.date_key "
+                  "WHERE (t.date_key, t.sensor_key) IN "
+                  "(SELECT MAX(date_key), sensor_key FROM temperatures_fact GROUP BY sensor_key) "
+                  "AND t.sensor_key IN (:sensor_key1, :sensor_key2, :sensor_key3, :sensor_key4);")
+    rows = dw.execute(_query, {"sensor_key1": 125, "sensor_key2": 229, "sensor_key3": 116, "sensor_key4": 7})
     data = rows.mappings().all()
 
     if len(data) == 0:
@@ -35,7 +37,7 @@ async def get_most_recent_indoor_temperature(dw: DW):
 
 # Haetaan edellisten 7 päivän keskiarvolämpötilat, jotka lajitellaan
 # päiväkohtaisesti. Tämä on MainScreenin PANEELIN graafia varten.
-@router.get("/seven_day_period/{date}")
+@router.get("/avg/indoor/seven_day_period/{date}")
 async def get_indoor_avg_temperature_statistic_seven_day_period(dw: DW, date: str):
     """
     Get daily temperatures (avg) from 7 days before the given date
@@ -66,7 +68,7 @@ async def get_indoor_avg_temperature_statistic_seven_day_period(dw: DW, date: st
 
 # Haetaan annetun päivän keskiarvolämpötilat, jotka lajitellaan
 # tuntikohtaisesti. Tämä on total consumption chartin DAY nappia varten.
-@router.get("/hourly/{date}")
+@router.get("/avg/indoor/hourly/{date}")
 async def get_indoor_avg_temperature_statistic_hourly_by_day(dw: DW, date: str):
     """
     Get hourly temperatures (avg) from a given day.
@@ -96,7 +98,7 @@ async def get_indoor_avg_temperature_statistic_hourly_by_day(dw: DW, date: str):
 
 # Haetaan annetun viikon keskiarvolämpötilat, jotka lajitellaan
 # päiväkohtaisesti. Tämä on total consumption chartin WEEK nappia varten.
-@router.get("/daily/week/{date}")
+@router.get("/avg/indoor/daily/week/{date}")
 async def get_indoor_avg_temperature_statistic_daily_by_week(dw: DW, date: str):
     """
     Get daily temperatures (avg) from a given week.
@@ -126,7 +128,7 @@ async def get_indoor_avg_temperature_statistic_daily_by_week(dw: DW, date: str):
 
 # Haetaan annetun kuukauden keskiarvolämpötilat, jotka lajitellaan
 # päiväkohtaisesti. Tämä on total consumption chartin MONTH-nappia varten.
-@router.get("/daily/month/{date}")
+@router.get("/avg/indoor/daily/month/{date}")
 async def get_indoor_avg_temperature_statistic_daily_by_month(dw: DW, date: str):
     """
     Get daily temperatures (avg) from a given month.
@@ -161,7 +163,7 @@ async def get_indoor_avg_temperature_statistic_daily_by_month(dw: DW, date: str)
 
 # Haetaan annetun vuoden keskiarvolämpötilat, jotka lajitellaan
 # kuukausikohtaisesti. Tämä on total consumption chartin YEAR-nappia varten.
-@router.get("/monthly/{date}")
+@router.get("/avg/indoor/monthly/{date}")
 async def get_indoor_avg_temperature_statistic_monthly_by_year(dw: DW, date: str):
     """
     Get monthly temperatures (avg) for a given year.
