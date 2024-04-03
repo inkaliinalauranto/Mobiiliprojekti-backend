@@ -2,7 +2,8 @@ import datetime
 from fastapi import APIRouter
 from sqlalchemy import text
 from customfunctions import generate_zero_for_missing_hours_in_day_with_keys, \
-    generate_zero_for_missing_days_in_week_query_with_keys, generate_zero_for_missing_days_in_month_query_with_keys
+    generate_zero_for_missing_days_in_week_query_with_keys, generate_zero_for_missing_days_in_month_query_with_keys, \
+    generate_zero_for_missing_months_in_year_query_with_keys
 from db import DW
 
 router = APIRouter(
@@ -102,6 +103,38 @@ async def get_indoor_avg_temperature_statistic_daily_by_month(dw: DW, date: str)
         temperature_unit_key = tuple(fetched_data[0].keys())[1]
 
     data = generate_zero_for_missing_days_in_month_query_with_keys(fetched_data, year, month, time_key, temperature_unit_key)
+
+    return {"data": data}
+
+
+# Haetaan annetun vuoden keskiarvolämpötilat, jotka lajitellaan
+# kuukausikohtaisesti. Tämä on total consumption chartin YEAR-nappia varten.
+@router.get("/monthly/{date}")
+async def get_indoor_avg_temperature_statistic_monthly_by_year(dw: DW, date: str):
+    """
+    Get monthly temperatures (avg) for a given year.
+    String ISO 8601 format YYYY-MM-DD.
+    """
+
+    _date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+    year = _date.year
+
+    _query = text("SELECT d.month, AVG(t.value) AS avg_°C "
+                  "FROM temperatures_fact t "
+                  "JOIN dates_dim d ON t.date_key = d.date_key "
+                  "WHERE d.year = ':year' AND t.sensor_key = :sensor_key "
+                  "GROUP BY d.month;")
+    rows = dw.execute(_query, {"year": year, "sensor_key": 125})
+    fetched_data = rows.mappings().all()
+
+    time_key = "month"
+    temperature_unit_key = "avg_°C"
+
+    if len(fetched_data) > 0:
+        time_key = tuple(fetched_data[0].keys())[0]
+        temperature_unit_key = tuple(fetched_data[0].keys())[1]
+
+    data = generate_zero_for_missing_months_in_year_query_with_keys(fetched_data, time_key, temperature_unit_key)
 
     return {"data": data}
 

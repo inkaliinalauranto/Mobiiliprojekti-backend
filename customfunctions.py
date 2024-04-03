@@ -254,3 +254,30 @@ def generate_zero_for_missing_days_in_month_query_with_keys(fetched_data, year: 
         data.append(data_of_day)
 
     return data
+
+
+# Generoi nollatietueet SQL datasta puuttuville kuukausille.
+def generate_zero_for_missing_months_in_year_query_with_keys(fetched_data, time_key, unit_key):
+    # Haetaan tietokannasta saadusta datasta kuukaudet, joissa on dataa
+    months_fetched = [i[time_key] for i in fetched_data]
+
+    # Alustetaan new_data list ja index(käytetään returned_datan tiedon hakemisessa)
+    data = []
+    index = 0
+
+    # Silmukoidaan 12 kuukauden verran
+    for month in range(1, 13):
+
+        # Jos kuukausi ei löydy saadusta listasta, luodaan nolla tietue.
+        if month not in months_fetched:
+            monthly_data = {time_key: month, unit_key: 0}
+
+        # Muussa tapauksessa listataan tietokannasta tullut datasta
+        else:
+            monthly_data = fetched_data[index]
+            index += 1
+
+        data.append(monthly_data)
+
+    return data
+
