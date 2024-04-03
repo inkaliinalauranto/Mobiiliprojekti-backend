@@ -224,3 +224,33 @@ def generate_zero_for_missing_days_in_week_query_with_keys(fetched_data, date: d
         day_of_week += datetime.timedelta(days=1)
 
     return data
+
+
+# Tehdään logiikka, jolla luodaan 0 data tietueet niile päiville, joilta ei saada dataa.
+# Tehdään se tässä, niin ei tarvitse frontendissä tehdä.
+def generate_zero_for_missing_days_in_month_query_with_keys(fetched_data, year: int, month: int, time_key, unit_key):
+
+    number_of_days = monthrange(year, month)[1]
+
+    # Haetaan tietokannasta saadusta datasta päivät, jotka on saatu.
+    days_fetched = [i[time_key] for i in fetched_data]
+
+    # Alustetaan new_data list ja index(käytetään returned_datan tiedon hakemisessa)
+    data = []
+    index = 0
+
+    # Silmukoidaan valitun kuukauden päivien lukumäärän mukaisesti
+    for day_number in range(1, number_of_days + 1):
+
+        # Jos kyseinen päivä ei löydy tietokannasta, luodaan nolla tietue
+        if day_number not in days_fetched:
+            data_of_day = {time_key: day_number, unit_key: 0}
+
+        # Muussa tapauksessa listataan tietokannasta tullut datasta
+        else:
+            data_of_day = fetched_data[index]
+            index += 1
+
+        data.append(data_of_day)
+
+    return data

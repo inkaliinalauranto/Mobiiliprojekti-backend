@@ -1,7 +1,8 @@
 import datetime
 from fastapi import APIRouter
 from sqlalchemy import text
-from customfunctions import generate_zero_for_missing_hours_in_day_with_keys, generate_zero_for_missing_days_in_week_query_with_keys
+from customfunctions import generate_zero_for_missing_hours_in_day_with_keys, \
+    generate_zero_for_missing_days_in_week_query_with_keys, generate_zero_for_missing_days_in_month_query_with_keys
 from db import DW
 
 router = APIRouter(
@@ -66,6 +67,41 @@ async def get_indoor_avg_temperature_statistic_daily_by_week(dw: DW, date: str):
 
     _date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
     data = generate_zero_for_missing_days_in_week_query_with_keys(fetched_data, _date, time_key, temperature_unit_key)
+
+    return {"data": data}
+
+
+# Haetaan annetun kuukauden keskiarvolämpötilat, jotka lajitellaan
+# päiväkohtaisesti. Tämä on total consumption chartin MONTH-nappia varten.
+@router.get("/daily/month/{date}")
+async def get_indoor_avg_temperature_statistic_daily_by_month(dw: DW, date: str):
+    """
+    Get daily temperatures (avg) from a given month.
+    String ISO 8601 format YYYY-MM-DD.
+    """
+
+    _date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+
+    year = _date.year
+    month = _date.month
+
+    _query = text("SELECT d.day, AVG(t.value) AS avg_°C "
+                  "FROM temperatures_fact t "
+                  "JOIN dates_dim d ON t.date_key = d.date_key "
+                  "WHERE d.year = ':year' AND d.month = ':month' "
+                  "AND t.sensor_key = :sensor_key "
+                  "GROUP BY d.day;")
+    rows = dw.execute(_query, {"year": year, "month": month, "sensor_key": 125})
+    fetched_data = rows.mappings().all()
+
+    time_key = "day"
+    temperature_unit_key = "avg_°C"
+
+    if len(fetched_data) > 0:
+        time_key = tuple(fetched_data[0].keys())[0]
+        temperature_unit_key = tuple(fetched_data[0].keys())[1]
+
+    data = generate_zero_for_missing_days_in_month_query_with_keys(fetched_data, year, month, time_key, temperature_unit_key)
 
     return {"data": data}
 
