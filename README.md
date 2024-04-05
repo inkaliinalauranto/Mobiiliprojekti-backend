@@ -14,6 +14,7 @@
 
 ## MySQL tietokantaan yhdistäminen
 - luo .env tiedosto
-- lisää sinne DB ja DW muuttujat
+- lisää sinne muuttujat:
     - DB=driver://kayttaja:salasana@localhost/cooldev_oltp
     - DW=driver://kayttaja:salasana@localhost/cooldev_olap
+    - SECRET= generoi koodi tähän genereate_hex.py 
