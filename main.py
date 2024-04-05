@@ -1,9 +1,10 @@
 from fastapi import FastAPI
 from routers import (battery, totalconsumpt, totalconsumpt_avg, totalconsumpt_sum,
-                     temperature, totalprod, totalprod_sum, totalprod_avg)
+                     temperature, totalprod, totalprod_sum, totalprod_avg, auth)
 
 
 app = FastAPI()
+app.include_router(auth.router)
 app.include_router(battery.router)
 app.include_router(totalconsumpt.router)
 app.include_router(totalconsumpt_avg.router)
