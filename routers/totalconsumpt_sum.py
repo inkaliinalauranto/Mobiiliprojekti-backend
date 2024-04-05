@@ -71,17 +71,19 @@ async def get_total_consumption_statistic_sum_week(dw: DW, date: str):
     return {"data": data}
 
 
-# Lasketaan kuukauden päivittäinen keskiarvo. Tämä on consumptionScreenin SUMMA kohtaa varten
+# Lasketaan kuukauden päivittäinen summa. Tämä on consumptionScreenin SUMMA kohtaa varten
 @router.get("/month/{date}")
 async def get_total_consumption_statistic_sum_month(dw: DW, date: str):
     """
     Get daily consumptions(sum) for a given month . ISO 8601 format YYYY-MM-DD
     """
+    _date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+
     _query = text("SELECT sum(f.value) as sum_kwh FROM `total_consumptions_fact` f "
                   "JOIN dates_dim d ON d.date_key = f.date_key "
-                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) = :date;")
+                  "WHERE d.month = :month;")
 
-    rows = dw.execute(_query, {"date": date})
+    rows = dw.execute(_query, {"month": _date.month})
     data = rows.mappings().all()
 
     if data[0]["sum_kwh"] is None:
