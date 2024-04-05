@@ -1,4 +1,3 @@
-import contextlib
 import os
 from typing import Annotated
 
@@ -10,19 +9,20 @@ from sqlalchemy.orm import sessionmaker, Session
 # Aukaistaan .env filu ja haetaan DW (olap) ja DB (oltp)
 load_dotenv(dotenv_path=".env")
 
+# DW käyttää OLAP tietokantaa
 dw = os.environ.get("DW")
 dw_engine = create_engine(dw)
 dw_session = sessionmaker(bind=dw_engine)
 
-# db = os.environ.get("DB")
-# db_engine = create_engine(db)
-# db_session = sessionmaker(bind=db_engine)
+# DB käyttää OLTP tietokantaa
+db = os.environ.get("DB")
+db_engine = create_engine(db)
+db_session = sessionmaker(bind=db_engine)
 
 
 def get_dw():
     _dw = None
     try:
-        sessionmaker(bind=dw_engine)
         _dw = dw_session()
         yield _dw
     finally:
@@ -30,17 +30,16 @@ def get_dw():
             _dw.close()
 
 
-# def get_db():
-#     _db = None
-#     try:
-#         sessionmaker(bind=db_engine)
-#         _db = db_session()
-#         yield _db
-#     finally:
-#         if _db is not None:
-#             _db.close()
+def get_db():
+    _db = None
+    try:
+        _db = db_session()
+        yield _db
+    finally:
+        if _db is not None:
+            _db.close()
 
 
 # Nämä importataan sinne, missä databaseja tarvii
 DW = Annotated[Session, Depends(get_dw)]
-# DB = Annotated[Session, Depends(get_db)]
+DB = Annotated[Session, Depends(get_db)]

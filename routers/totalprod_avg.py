@@ -27,7 +27,7 @@ async def get_total_production_statistic_avg_seven_day_period(dw: DW, date: str)
     rows = dw.execute(_query, {"date": date})
     data = rows.mappings().all()
 
-    if data[0]["avg_kwh"] is None:
+    if len(data) == 0:
         data = [{"avg_kwh": 0}]
 
     return {"data": data}
@@ -48,7 +48,7 @@ async def get_total_production_statistic_avg_day(dw: DW, date: str):
     rows = dw.execute(_query, {"date": date})
     data = rows.mappings().all()
 
-    if data[0]["avg_kwh"] is None:
+    if len(data) == 0:
         data = [{"avg_kwh": 0}]
 
     return {"data": data}
@@ -68,7 +68,7 @@ async def get_total_production_statistic_avg_week(dw: DW, date: str):
     rows = dw.execute(_query, {"date": date})
     data = rows.mappings().all()
 
-    if data[0]["avg_kwh"] is None:
+    if len(data) == 0:
         data = [{"avg_kwh": 0}]
 
     return {"data": data}
@@ -92,7 +92,7 @@ async def get_total_production_statistic_avg_month(dw: DW, date: str):
     rows = dw.execute(_query, {"number_of_days": number_of_days, "date": date})
     data = rows.mappings().all()
 
-    if data[0]["avg_kwh"] is None:
+    if len(data) == 0:
         data = [{"avg_kwh": 0}]
 
     return {"data": data}
@@ -113,7 +113,7 @@ async def get_avg_production_statistics_for_a_year(dw: DW, date: str):
     rows = dw.execute(_query, {"date": date})
     data = rows.mappings().all()
 
-    if data[0]["avg_kwh"] is None:
+    if len(data) == 0:
         data = [{"avg_kwh": 0}]
 
     return {"data": data}

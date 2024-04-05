@@ -25,7 +25,7 @@ async def get_total_production_statistics_sum_seven_day_period(dw: DW, date: str
     rows = dw.execute(_query, {"date": date})
     data = rows.mappings().all()
 
-    if data[0]["sum_kwh"] is None:
+    if len(data) == 0:
         data = [{"sum_kwh": 0}]
 
     return {"data": data}
@@ -45,7 +45,7 @@ async def get_total_production_statistic_sum_day(dw: DW, date: str):
     rows = dw.execute(_query, {"date": date})
     data = rows.mappings().all()
 
-    if data[0]["sum_kwh"] is None:
+    if len(data) == 0:
         data = [{"sum_kwh": 0}]
 
     return {"data": data}
@@ -65,7 +65,7 @@ async def get_total_production_statistic_sum_week(dw: DW, date: str):
     rows = dw.execute(_query, {"date": date})
     data = rows.mappings().all()
 
-    if data[0]["sum_kwh"] is None:
+    if len(data) == 0:
         data = [{"sum_kwh": 0}]
 
     return {"data": data}
@@ -85,7 +85,7 @@ async def get_total_production_statistic_sum_month(dw: DW, date: str):
     rows = dw.execute(_query, {"date": date})
     data = rows.mappings().all()
 
-    if data[0]["sum_kwh"] is None:
+    if len(data) == 0:
         data = [{"sum_kwh": 0}]
 
     return {"data": data}
@@ -108,7 +108,7 @@ async def get_total_production_statistic_sum_year(dw: DW, date: str):
     rows = dw.execute(_query, {"year": year})
     data = rows.mappings().all()
 
-    if data[0]["sum_kwh"] is None:
+    if len(data) == 0:
         data = [{"sum_kwh": 0}]
 
     return {"data": data}

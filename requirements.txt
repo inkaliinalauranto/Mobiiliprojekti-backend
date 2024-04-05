@@ -3,3 +3,10 @@ uvicorn[standard]
 mysql-connector-python
 sqlalchemy
 python-dotenv
+pydantic
+
+
+pyopenssl
+python-multipart
+python-jose[cryptography]
+passlib[bcrypt]

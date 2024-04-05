@@ -20,7 +20,8 @@ USE `cooldev_oltp` ;
 CREATE TABLE IF NOT EXISTS `cooldev_oltp`.`auth_roles` (
   `role_id` INT NOT NULL AUTO_INCREMENT,
   `role_name` VARCHAR(45) NOT NULL,
-  PRIMARY KEY (`role_id`))
+  PRIMARY KEY (`role_id`),
+  UNIQUE INDEX `role_name_UNIQUE` (`role_name` ASC))
 ENGINE = InnoDB;
 
 
@@ -33,10 +34,11 @@ CREATE TABLE IF NOT EXISTS `cooldev_oltp`.`auth_users` (
   `deleted_at` DATETIME NULL,
   `username` VARCHAR(255) NOT NULL,
   `password` VARCHAR(255) NOT NULL,
-  `access_jti` VARCHAR(512) NOT NULL,
+  `access_jti` VARCHAR(512) NULL,
   `auth_role_id` INT NOT NULL,
   PRIMARY KEY (`user_id`),
   INDEX `fk_auth_users_auth_roles1_idx` (`auth_role_id` ASC),
+  UNIQUE INDEX `username_UNIQUE` (`username` ASC),
   CONSTRAINT `fk_auth_users_auth_roles1`
     FOREIGN KEY (`auth_role_id`)
     REFERENCES `cooldev_oltp`.`auth_roles` (`role_id`)
