@@ -17,14 +17,14 @@ router = APIRouter(
     tags=['Authorization']
 )
 
-# Salasanan hashays
+# Salasanan häshäys
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # PW bearer. TokenURL on sama kuin login openapi funktion endpoint
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login/openapi")
 
 # Tokenin luontiin ja käsittelyyn liittyvä tieto ja funktio
-# Secret key on meidän randomisti generoitu 32 merkin hex, joka on envissä.
+# Secret key on meidän randomisti generoitu 32 hexan merkkijono, joka on envissä.
 load_dotenv(dotenv_path=".env")
 
 SECRET_KEY = environ.get("SECRET")
