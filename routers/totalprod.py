@@ -27,7 +27,7 @@ async def get_total_production_statistic_daily_seven_day_period(dw: DW, date: st
                   "FROM productions_fact p "
                   "JOIN dates_dim d ON p.date_key = d.date_key "
                   "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
-                  "BETWEEN DATE_SUB(DATE(:date), INTERVAL 7 DAY) AND :date "
+                  "BETWEEN DATE_SUB(DATE(:date), INTERVAL 6 DAY) AND :date "
                   "GROUP BY d.day "
                   "ORDER BY date;")
 

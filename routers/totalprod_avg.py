@@ -22,7 +22,7 @@ async def get_total_production_statistic_avg_seven_day_period(dw: DW, date: str)
     _query = text("SELECT sum(value)/7 AS avg_kwh FROM productions_fact p "
                   "JOIN dates_dim d ON p.date_key = d.date_key "
                   "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
-                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND :date")
+                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND :date")
 
     rows = dw.execute(_query, {"date": date})
     data = rows.mappings().all()

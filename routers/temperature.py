@@ -72,7 +72,7 @@ async def get_indoor_avg_temperature_statistic_seven_day_period(dw: DW, date: st
                   "FROM temperatures_fact t "
                   "JOIN dates_dim d ON t.date_key = d.date_key "
                   "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
-                  "BETWEEN DATE_SUB(DATE(:date), INTERVAL 7 DAY) AND :date "
+                  "BETWEEN DATE_SUB(DATE(:date), INTERVAL 6 DAY) AND :date "
                   "AND t.sensor_key = :sensor_key "
                   "GROUP BY date;")
     rows = dw.execute(_query, {"date": date, "sensor_key": 125})

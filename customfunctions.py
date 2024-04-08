@@ -157,6 +157,7 @@ def generate_zero_for_missing_days_in_7_day_period_with_keys(fetched_data, date:
 
     # Loopataan 7-day period ajan verran
     for i in range(7):
+        print(date)
         if date not in days_fetched:
             daily_data = {time_key: date, unit_key: 0}
         else:
