@@ -17,19 +17,27 @@ async def get_total_consumption_statistics_daily_seven_day_period(dw: DW, date: 
     """
     Get daily consumptions(total) from 7 days before the given date (7-day period). String ISO 8601 format YYYY-MM-DD
     """
-    _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as date, sum(value) AS total_kwh "
+    _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as date, "
+                  "sum(value) AS total_kwh "
                   "FROM total_consumptions_fact f "
-                  "JOIN dates_dim d ON d.date_key = f.date_key "
+                  "JOIN dates_dim d ON f.date_key = d.date_key "
                   "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
-                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND :date "
+                  "BETWEEN DATE_SUB(DATE(:date), INTERVAL 6 DAY) AND :date "
                   "GROUP BY d.day "
                   "ORDER BY date;")
 
     rows = dw.execute(_query, {"date": date})
     fetched_data = rows.mappings().all()
-
     _date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
-    data = generate_zero_for_missing_days_in_7_day_period(fetched_data, _date)
+
+    time_key = "date"
+    consumption_key = "total_kwh"
+
+    if len(fetched_data) > 0:
+        time_key = tuple(fetched_data[0].keys())[0]
+        consumption_key = tuple(fetched_data[0].keys())[1]
+
+    data = generate_zero_for_missing_days_in_7_day_period_with_keys(fetched_data, _date, time_key, consumption_key)
 
     return {"data": data}
 
