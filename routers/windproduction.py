@@ -52,24 +52,27 @@ async def get_most_recent_wind_data(dw: DW):
 
 # Haetaan edellisten 7 päivän keskiarvo tuuli generaattori tuotolle, jotka lajitellaan
 # päiväkohtaisesti. Tämä on MainScreenin PANEELIN graafia varten.
-@router.get("/avg/wind_production/seven_day_period/{date}")
-async def get_avg_wind_production_seven_day_period(dw: DW, date: str):
+@router.get("/total_kwh/wind_production/seven_day_period/{date}")
+async def get_total_kwh_wind_production_seven_day_period(dw: DW, date: str):
     """
-    Get daily wind_productions (avg) from 7 days before the given date
+    Get daily wind_productions (total_kwh) from 7 days before the given date
     (7-day period) grouped by day. String ISO 8601 format YYYY-MM-DD.
     """
-    _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as date, AVG(t.value) AS avg_C "
-                  "FROM productions_fact t "
-                  "JOIN dates_dim d ON t.date_key = d.date_key "
-                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
-                  "BETWEEN DATE_SUB(DATE(:date), INTERVAL 6 DAY) AND :date "
-                  "AND t.sensor_key = :sensor_key "
-                  "GROUP BY date;")
+    _query = text("""
+        SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as date, SUM(t.value) AS total_kwh
+        FROM productions_fact t 
+        JOIN dates_dim d ON t.date_key = d.date_key 
+        WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) 
+        BETWEEN DATE_SUB(DATE(:date), INTERVAL 6 DAY) AND :date 
+        AND t.sensor_key = :sensor_key 
+        GROUP BY date;
+    """)
     rows = dw.execute(_query, {"date": date, "sensor_key": 286})
+
     fetched_data = rows.mappings().all()
 
     time_key = "date"
-    wind_unit_key = "avg_C"
+    wind_unit_key = "total_kwh"
 
     if len(fetched_data) > 0:
         time_key = tuple(fetched_data[0].keys())[0]
@@ -83,13 +86,13 @@ async def get_avg_wind_production_seven_day_period(dw: DW, date: str):
 
 # Haetaan annetun päivän keskiarvo tuuli generaattori tuotolle, jotka lajitellaan
 # tuntikohtaisesti. Tämä on total consumption chartin DAY nappia varten.
-@router.get("/avg/wind_production/hourly/{date}")
-async def get_avg_wind_production_hourly_by_day(dw: DW, date: str):
+@router.get("/total_kwh/wind_production/hourly/{date}")
+async def get_total_kwh_wind_production_hourly_by_day(dw: DW, date: str):
     """
-    Get hourly wind_productions (avg) from a given day.
+    Get hourly wind_productions (total_kwh) from a given day.
     String ISO 8601 format YYYY-MM-DD.
     """
-    _query = text("SELECT d.hour, AVG(t.value) AS avg_C "
+    _query = text("SELECT d.hour, SUM(t.value) AS total_kwh "
                   "FROM productions_fact t "
                   "JOIN dates_dim d ON t.date_key = d.date_key "
                   "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) = DATE(:date) "
@@ -100,7 +103,7 @@ async def get_avg_wind_production_hourly_by_day(dw: DW, date: str):
     fetched_data = rows.mappings().all()
 
     time_key = "hour"
-    wind_unit_key = "avg_C"
+    wind_unit_key = "total_kwh"
 
     if len(fetched_data) > 0:
         time_key = tuple(fetched_data[0].keys())[0]
@@ -113,23 +116,28 @@ async def get_avg_wind_production_hourly_by_day(dw: DW, date: str):
 
 # Haetaan annetun viikon keskiarvo tuuli generaattori tuotolle, jotka lajitellaan
 # päiväkohtaisesti. Tämä on total consumption chartin WEEK nappia varten.
-@router.get("/avg/wind_production/daily/week/{date}")
-async def get_avg_wind_production_daily_by_week(dw: DW, date: str):
+@router.get("/total_kwh/wind_production/daily/week/{date}")
+async def get_total_kwh_wind_production_daily_by_week(dw: DW, date: str):
     """
-    Get daily wind_productions (avg) from a given week.
+    Get daily wind_productions (total_kwh) from a given week.
     String ISO 8601 format YYYY-MM-DD.
     """
-    _query = text("SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as date, AVG(t.value) AS avg_C "
-                  "FROM productions_fact t "
-                  "JOIN dates_dim d ON t.date_key = d.date_key "
-                  "WHERE WEEK(DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))), 1) = WEEK(:date, 1) "
-                  "AND t.sensor_key = :sensor_key "
-                  "GROUP BY date;")
+    _query = text("""
+    SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as date, 
+           SUM(t.value) AS total_kwh
+    FROM productions_fact t 
+    JOIN dates_dim d ON t.date_key = d.date_key 
+    WHERE WEEK(DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))), 1) = WEEK(:date, 1) 
+    AND t.sensor_key = :sensor_key 
+    GROUP BY date;
+    """)
+
     rows = dw.execute(_query, {"date": date, "sensor_key": 286})
+
     fetched_data = rows.mappings().all()
 
     time_key = "date"
-    wind_unit_key = "avg_C"
+    wind_unit_key = "total_kwh"
 
     if len(fetched_data) > 0:
         time_key = tuple(fetched_data[0].keys())[0]
@@ -143,10 +151,10 @@ async def get_avg_wind_production_daily_by_week(dw: DW, date: str):
 
 # Haetaan annetun kuukauden keskiarvo tuuli generaattori tuotolle, jotka lajitellaan
 # päiväkohtaisesti. Tämä on total consumption chartin MONTH-nappia varten.
-@router.get("/avg/wind_production/daily/month/{date}")
-async def get_avg_wind_production_daily_by_month(dw: DW, date: str):
+@router.get("/total_kwh/wind_production/daily/month/{date}")
+async def get_total_kwh_wind_production_daily_by_month(dw: DW, date: str):
     """
-    Get daily wind_productions (avg) from a given month.
+    Get daily wind_productions (total_kwh) from a given month.
     String ISO 8601 format YYYY-MM-DD.
     """
 
@@ -155,7 +163,7 @@ async def get_avg_wind_production_daily_by_month(dw: DW, date: str):
     year = _date.year
     month = _date.month
 
-    _query = text("SELECT d.day, AVG(t.value) AS avg_C "
+    _query = text("SELECT d.day, SUM(t.value) AS total_kwh "
                   "FROM productions_fact t "
                   "JOIN dates_dim d ON t.date_key = d.date_key "
                   "WHERE d.year = ':year' AND d.month = ':month' "
@@ -165,7 +173,7 @@ async def get_avg_wind_production_daily_by_month(dw: DW, date: str):
     fetched_data = rows.mappings().all()
 
     time_key = "day"
-    wind_unit_key = "avg_C"
+    wind_unit_key = "total_kwh"
 
     if len(fetched_data) > 0:
         time_key = tuple(fetched_data[0].keys())[0]
@@ -179,17 +187,17 @@ async def get_avg_wind_production_daily_by_month(dw: DW, date: str):
 
 # Haetaan annetun vuoden keskiarvo tuuli generaattori tuotolle, jotka lajitellaan
 # kuukausikohtaisesti. Tämä on total consumption chartin YEAR-nappia varten.
-@router.get("/avg/wind_production/monthly/{date}")
-async def get_avg_wind_production_monthly_by_year(dw: DW, date: str):
+@router.get("/total_kwh/wind_production/monthly/{date}")
+async def get_total_kwh_wind_production_monthly_by_year(dw: DW, date: str):
     """
-    Get monthly wind_productions (avg) for a given year.
+    Get monthly wind_productions (total_kwh) for a given year.
     String ISO 8601 format YYYY-MM-DD.
     """
 
     _date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
     year = _date.year
 
-    _query = text("SELECT d.month, AVG(t.value) AS avg_C "
+    _query = text("SELECT d.month, SUM(t.value) AS total_kwh "
                   "FROM productions_fact t "
                   "JOIN dates_dim d ON t.date_key = d.date_key "
                   "WHERE d.year = ':year' AND t.sensor_key = :sensor_key "
@@ -198,7 +206,7 @@ async def get_avg_wind_production_monthly_by_year(dw: DW, date: str):
     fetched_data = rows.mappings().all()
 
     time_key = "month"
-    wind_unit_key = "avg_C"
+    wind_unit_key = "total_kwh"
 
     if len(fetched_data) > 0:
         time_key = tuple(fetched_data[0].keys())[0]
