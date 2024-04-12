@@ -55,7 +55,6 @@ async def get_total_solar_production_hourly_by_day(dw: DW, date: str):
                   "FROM productions_fact p "
                   "JOIN dates_dim d ON p.date_key = d.date_key "
                   "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) = :date "
-                  "BETWEEN DATE_SUB(DATE(:date), INTERVAL 6 DAY) AND :date "
                   "AND p.sensor_key = :sensor_key "
                   "GROUP BY d.hour "
                   "ORDER BY d.hour;"
@@ -87,7 +86,6 @@ async def get_total_solar_production_daily_by_week(dw: DW, date: str):
                   "FROM productions_fact p "
                   "JOIN dates_dim d ON p.date_key = d.date_key "
                   "WHERE WEEK(DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))), 1) = WEEK(:date, 1) "
-                  "BETWEEN DATE_SUB(DATE(:date), INTERVAL 6 DAY) AND :date "
                   "AND p.sensor_key = :sensor_key "
                   "GROUP BY d.day;"
     )
