@@ -37,7 +37,7 @@ async def get_total_consumption_statistic_avg_day(dw: DW, date: str):
     Get hourly consumptions(avg) for a given day . ISO 8601 format YYYY-MM-DD
     """
     _current_hour_count_query = text("SELECT COUNT(*) AS record_count FROM "
-                                     "(SELECT d.hour as hour, sum(f.value) as total_kwh "
+                                     "(SELECT sum(f.value) as total_kwh "
                                      "FROM total_consumptions_fact f "
                                      "JOIN dates_dim d ON d.date_key = f.date_key "
                                      "JOIN sensors_dim s ON s.sensor_key = f.sensor_key "
@@ -72,8 +72,7 @@ async def get_total_consumption_statistic_avg_week(dw: DW, date: str):
     Get daily consumptions(avg) for a given week . ISO 8601 format YYYY-MM-DD
     """
     _current_day_count_query = text("SELECT COUNT(*) AS record_count FROM "
-                                    "(SELECT DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) as date, "
-                                    "sum(f.value) as total_kwh FROM total_consumptions_fact f "
+                                    "(SELECT sum(f.value) as total_kwh FROM total_consumptions_fact f "
                                     "JOIN dates_dim d ON d.date_key = f.date_key "
                                     "WHERE WEEK(CONCAT(d.year, '-', d.month, '-', d.day), 1) = WEEK(:date, 1) "
                                     "GROUP BY d.day) "
@@ -106,7 +105,7 @@ async def get_total_consumption_statistic_avg_month(dw: DW, date: str):
     Get daily consumptions(avg) for a given month . ISO 8601 format YYYY-MM-DD
     """
     _current_day_count_query = text("SELECT COUNT(*) AS record_count FROM "
-                                    "(SELECT d.day, sum(f.value) as total_kwh "
+                                    "(SELECT sum(f.value) as total_kwh "
                                     "FROM total_consumptions_fact f "
                                     "JOIN dates_dim d ON d.date_key = f.date_key "
                                     "WHERE d.year = YEAR(:date) AND d.month = MONTH(:date) "
@@ -143,7 +142,7 @@ async def get_total_consumption_statistic_avg_year(dw: DW, date: str):
     Get monthly consumptions(avg) for a given year . ISO 8601 format YYYY-MM-DD
     """
     _current_month_count_query = text("SELECT COUNT(*) AS record_count FROM "
-                                      "(SELECT d.month, sum(f.value) as total_kwh "
+                                      "(SELECT sum(f.value) as total_kwh "
                                       "FROM total_consumptions_fact f "
                                       "JOIN dates_dim d ON d.date_key = f.date_key "
                                       "WHERE d.year = :date GROUP BY d.month) "
