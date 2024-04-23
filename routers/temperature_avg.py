@@ -63,7 +63,7 @@ async def get_avg_temperature_by_week(dw: DW, date: str):
     else:
         avg = avg_sum / len(data)
 
-    return {"data": avg}
+    return {"data": {"avg_temp": avg}}
 
 
 @router.get("/avg/indoor/month/{date}")
@@ -93,7 +93,7 @@ async def get_avg_temperature_by_month(dw: DW, date: str):
     else:
         avg = avg_sum / len(data)
 
-    return {"data": avg}
+    return {"data": {"avg_temp": avg}}
 
 
 @router.get("/avg/indoor/year/{date}")
@@ -122,4 +122,4 @@ async def get_avg_temperature_by_year(dw: DW, date: str):
     else:
         avg = avg_sum / len(data)
 
-    return {"data": avg}
+    return {"data": {"avg_temp": avg}}
