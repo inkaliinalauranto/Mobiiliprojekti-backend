@@ -8,7 +8,7 @@ from db import DW
 
 router = APIRouter(
     prefix='/api/measurement/temperature',
-    tags=['Temperature']
+    tags=['Temperature - Indoors']
 )
 
 
@@ -240,47 +240,4 @@ async def get_indoor_avg_temperature_statistic_monthly_by_year(dw: DW, date: str
 #         print("DATA2", data)
 #
 #     return {"data": data}
-
-
-@router.get("/avg/day/{date}")
-async def get_avg_temperature_by_day(dw: DW, date: str):
-    """
-        Get avg temperature for a given day.
-        String ISO 8601 format YYYY-MM-DD.
-    """
-
-    _query = text("SELECT avg(value) as avg_temp FROM temperatures_fact f "
-                  "JOIN dates_dim d ON f.date_key = d.date_key "
-                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) = :date "
-                  "AND sensor_key = 125;")
-
-    rows = dw.execute(_query, {"date": date})
-    data = rows.mappings().first()
-
-    if data['avg_temp'] is None:
-        data = {"avg_temp": 0}
-
-    return {"data": data}
-
-
-@router.get("/avg/week/{date}")
-async def get_avg_temperature_by_week(dw: DW, date: str):
-    """
-        Get avg temperature for a given week.
-        String ISO 8601 format YYYY-MM-DD.
-    """
-
-    _query = text("SELECT avg(value) as avg_temp FROM temperatures_fact f "
-                  "JOIN dates_dim d ON f.date_key = d.date_key "
-                  "WHERE (DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) "
-                  "BETWEEN DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND :date) "
-                  "AND sensor_key = 125;")
-
-    rows = dw.execute(_query, {"date": date})
-    data = rows.mappings().first()
-
-    if data['avg_temp'] is None:
-        data = {"avg_temp": 0}
-
-    return {"data": data}
 
