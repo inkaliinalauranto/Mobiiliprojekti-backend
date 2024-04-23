@@ -18,16 +18,24 @@ async def get_avg_temperature_by_day(dw: DW, date: str):
 
     _query = text("SELECT avg(value) as avg_temp FROM temperatures_fact f "
                   "JOIN dates_dim d ON f.date_key = d.date_key "
-                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) = :date "
-                  "AND sensor_key = 125;")
+                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) = :date AND sensor_key = 125 "
+                  "GROUP BY d.hour;")
 
     rows = dw.execute(_query, {"date": date})
-    data = rows.mappings().first()
+    data = rows.mappings().all()
 
-    if data['avg_temp'] is None:
-        data = {"avg_temp": 0}
+    avg_sum = 0
 
-    return {"data": data}
+    for item in data:
+        print(item["avg_temp"])
+        avg_sum += item["avg_temp"]
+
+    if len(data) == 0:
+        avg = 0
+    else:
+        avg = avg_sum / len(data)
+
+    return {"data": {"avg_temp": avg}}
 
 
 @router.get("/avg/indoor/week/{date}")
