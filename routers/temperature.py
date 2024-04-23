@@ -264,7 +264,7 @@ async def get_avg_temperature_by_day(dw: DW, date: str):
 
 
 @router.get("/avg/week/{date}")
-async def get_avg_temperature_by_day(dw: DW, date: str):
+async def get_avg_temperature_by_week(dw: DW, date: str):
     """
         Get avg temperature for a given week.
         String ISO 8601 format YYYY-MM-DD.
