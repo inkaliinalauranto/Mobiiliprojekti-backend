@@ -82,7 +82,7 @@ async def get_avg_temperature_by_year(dw: DW, date: str):
         String ISO 8601 format YYYY-MM-DD.
     """
 
-    year = datetime.datetime.strptime(date, '%Y-%m-%d').date().month
+    year = datetime.datetime.strptime(date, '%Y-%m-%d').date().year
 
     _query = text("SELECT avg(value) as avg_temp FROM temperatures_fact f "
                   "JOIN dates_dim d ON f.date_key = d.date_key "
