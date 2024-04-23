@@ -125,7 +125,7 @@ async def get_total_consumption_statistic_avg_month(dw: DW, date: str):
 
     _query = text("SELECT sum(f.value)/:number_of_days as avg_kwh FROM `total_consumptions_fact` f "
                   "JOIN dates_dim d ON d.date_key = f.date_key "
-                  "WHERE DATE(TIMESTAMP(CONCAT_WS('-', d.year, d.month, d.day))) = :date;")
+                  "WHERE d.month = MONTH(:date) AND d.year = YEAR(:date);")
 
     rows = dw.execute(_query, {"number_of_days": count, "date": date})
     data = rows.mappings().all()
